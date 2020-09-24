@@ -1,23 +1,5 @@
 //Pseudocode for residential building elevators controller (controller algorithm)
 
-// definition of the class Controller
-Start Class Controller
-    arguments number of columns and number of floors
-    // declare variables
-    Set array floor_upcall_list to null 
-
-    Set array floor_downcall_list to null
-
-    Set numberOfColumns to 1
-
-    Set numberOfElevators to 2
-
-    Set numberOfFloors to 10
-
-    Contains columns, elevators, buttons (up and down), floorbuttons inside elevators, elevator doors
-
-End Class Controller
-
 // definition of the class Column
 DEFINE Column USING id AND status:
     ID: id,
@@ -29,7 +11,7 @@ DEFINE Column USING id AND status:
     UpButtonFloorList: SET to empty List,
     DownButtonFloorList: SET to empty List,
    
-    FloorUpRequestList: SET to empty List,
+    ElevatorFloorUpRequestList: SET to empty List,
     FloorDownRequestList: SET to empty List
 
      
@@ -44,9 +26,10 @@ DEFINE Column USING id AND status:
                 endif
 
             ENDFOR
-            if addToList=true THEN
+            if addToList=true or floorRequested is not in FloorUpRequestList THEN
                 ADD floorRequested TO FloorUpRequestList
-            endif
+                SORT ascending order FloorUpRequestList
+           endif
         endif
         else if buttonDirection = down THEN
             // verify if floor requested already in the FloorDownRequestList before adding to the list
@@ -58,30 +41,69 @@ DEFINE Column USING id AND status:
                 endif
 
             ENDFOR
-            if addToList=true THEN
+            if addToList=true or floorRequested is not in FloorDownRequestList THEN
                 ADD floorRequested TO FloorDownRequestList
+                SORT descending order FloorDownRequestList
             endif
         endif
     ENDSEQUENCE
 
-    SEQUENCE columnFindElevator USING ElevatorOriginList, ElevatorDirectionList, FloorUpRequestList AND FloorDownRequestList
+    SEQUENCE columnRemoveFloorRequestList USING  FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
+         if buttonDirection = up THEN
+            FOR EACH FloorUpRequest IN FloorUpRequestList
+                if floorRequested = FloorUpRequest THEN
+                    REMOVE FloorUpRequest FROM FloorUpRequestList
+                endif
+            ENDFOR
+        endif
+        else if buttonDirection = down THEN
+            FOR EACH FloorDownRequest IN FloorDownRequestList
+                if floorRequested = FloorDownRequest THEN
+                    REMOVE FloorDownRequest FROM FloorDownRequestList
+                endif
+            ENDFOR
+        endif
+    ENDSEQUENCE
+
+    SEQUENCE columnFindElevator USING ElevatorDestination, ElevatorFloorList, ElevatorDirectionList, FloorUpRequestList AND FloorDownRequestList
         // case FloorUpRequestList
         SET ElevatorUpSelected to null
         SET minFloorUpRequested to first item of FloorUpRequestList
         SET maxFloorUpRequested to last item of FloorUpRequestList
             // select first elevator moving, refine with closest one later or one that can do all the list
         FOR EACH Elevator IN ElevatorList
-            if ElevatorDirection is up AND ElevatorOrigin <= maxFloorUpRequested THEN
+            if ElevatorDirection is up AND ElevatorFloor <= maxFloorUpRequested THEN
                 SET ElevatorUpSelected TO Elevator
+                FOR ElevatorUpSelected IN ElevatorList
+                SET ElevatorFloorUpRequestList TO FloorUpRequestList
+                SET ElevatorFloorDownRequestList TO FloorDownRequestList
+
+                    FOR EACH FloorUpRequest IN FloorUpRequestList
+                        if FloorUpRequest is higher or equal to ElevatorFloor
+                            CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
+                            CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
+                        endif
+                    ENDFOR
+                ENDFOR
+
                 EXIT FOR // BREAK
             endif
         ENDFOR
-            // select lastly elevator not moving (idle)
+            // select lastly elevator not moving (idle and with no destination) to clear (empty) FloorUpRequestList
         if ElevatorUpSelected = null THEN
             FOR EACH Elevator IN ElevatorList
-                if ElevatorDirection is idle THEN
+                if ElevatorDirection is idle AND ElevatorDestination is null THEN
+                    SET buttonDirection TO up
                     SET ElevatorUpSelected TO Elevator
-                    EXIT FOR // BREAK
+                    FOR ElevatorUpSelected IN ElevatorList
+                        SET ElevatorFloorUpRequestList TO FloorUpRequestList
+                        SET ElevatorFloorDownRequestList TO FloorDownRequestList
+                        FOR EACH FloorUpRequest IN FloorUpRequestList
+                                CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
+                                CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
+                        ENDFOR
+                    ENDFOR
+                   EXIT FOR // BREAK
                 endif
             ENDFOR
         endif
@@ -92,16 +114,37 @@ DEFINE Column USING id AND status:
         SET maxFloorDownRequested to last item of FloorDownRequestList
             // select first elevator moving, refine with closest one later or one that can do all the list
         FOR EACH Elevator IN ElevatorList
-            if ElevatorDirection is down AND ElevatorOrigin >= minFloorDownRequested THEN
+            if ElevatorDirection is down AND ElevatorFloor >= minFloorDownRequested THEN
                 SET ElevatorDownSelected TO Elevator
+                FOR ElevatorDownSelected IN ElevatorList
+                    SET ElevatorFloorUpRequestList TO FloorUpRequestList
+                    SET ElevatorFloorDownRequestList TO FloorDownRequestList
+                    FOR EACH FloorDownRequest IN FloorDownRequestList
+                        if FloorDownRequest is lower or equal to ElevatorFloor
+                            CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
+                            CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
+                        endif
+                    ENDFOR
+                ENDFOR
                 EXIT FOR // BREAK
             endif
         ENDFOR
-            // select lastly elevator not moving (idle)
+            // select lastly elevator not moving (idle and with no destination) to clear (empty) FloorDownRequestList
         if ElevatorDownSelected = null THEN
             FOR EACH Elevator IN ElevatorList
-                if ElevatorDirection is idle THEN
+                if ElevatorDirection is idle AND ElevatorDestination is null THEN
+                    SET buttonDirection TO down
                     SET ElevatorDownSelected TO Elevator
+                    FOR ElevatorDownSelected IN ElevatorList
+                    SET ElevatorFloorUpRequestList TO FloorUpRequestList
+                    SET ElevatorFloorDownRequestList TO FloorDownRequestList
+                        FOR EACH FloorDownRequest IN FloorDownRequestList
+                            if FloorDownRequest is lower or equal to ElevatorFloor
+                                CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
+                                CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
+                            endif
+                        ENDFOR
+                    ENDFOR
                     EXIT FOR // BREAK
                 endif
             ENDFOR
@@ -150,60 +193,115 @@ DEFINE Column USING id AND status:
     ENDSEQUENCE
 
 ENDDEFINE
-/*******************************************************************************
-SET column1 TO INSTANTIATE Column WITH 1 AND online,
-// 2 for elevator_amount and 10 for floor_amount
-SET column1 status TO offline
-/*******************************************************************************
-Start Class Column
-    arguments number of elevators and number of floors
-    // declare variables
-    Set array floor_upcall_list to null 
-
-    Set array floor_downcall_list to null
-
-    Set numberOfElevators to 2 (number of elevators)
-
-    Set array elevators to (elevator1,..., elevatornumberOfElevators)
-
-    Set numberOfFloors to 10 (number of floors)
-
-    Set array buttons to (upButton1,..., upButtonnumberOfFloors, downButton1, ..., downButtonnumberOfFloors)
-    Set array upButtons to (upButton1,..., upButtonnumberOfFloors)
-    Set array downButtons to (downButton1, ..., downButtonnumberOfFloors)
-
-    Contains elevators, buttons (up and down), floorbuttons inside elevators, elevator doors
-
-End Class Column
-/*******************************************************************************
-
-
-// definition of the class Button (related to floor and column, light on if pressed, light off if command resolved or default)
-Start Class Button
-    arguments floor, direction and onStatus
-    // declare variables
-    Set dir to direction (up or down or null)
-
-    Set isPressed to onStatus (true or false)
-
-    Contains nothing
-
-End Class Button
 
 // definition of the class Elevator
-DEFINE Elevator USING origin, destination, doorOpen, doorClosed, direction, id AND status:
+DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, direction, id AND status:
     ID: id,
     Status: status, // online, offline
     Direction : direction, // null (idle), up, down
     DoorOpen: doorOpen, // bool true false
     DoorClosed: doorClosed, // bool true false
-    Origin: origin, // floor domain (1,...,10)
+    Floor: floor, // floor domain (1,...,10)
     Destination: destination, // floor domain (1,...,10) and null if Direction to null (idle)
-    ButtonList: SET to empty List,
+    Origin: origin, // floor domain (1,...,10)
+    FloorButtonList: SET to empty List,
+    FloorButtonFloorList: SET to empty List,
     ButtonFloorRequestedList: SET to empty List,
     FloorRequestList: SET to empty List,
     FloorUpRequestList: SET to empty List,
     FloorDownRequestList: SET to empty List
+
+     
+    SEQUENCE elevatorAddFloorRequestList USING ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
+        // case ElevatorFloorUpRequestList, ElevatorFloorDownRequestList are empty before the call
+        if ElevatorDirection is idle THEN
+            if buttonDirection is up THEN
+                // verify if floor requested already in the ElevatorFloorUpRequestList before adding to the list
+                // bside and ElevatorDirection is up
+                SET addToList=true;
+                FOR EACH ElevatorFloorUpRequest IN ElevatorFloorUpRequestList
+                    if floorRequested = ElevatorFloorUpRequest THEN
+                        SET addToList=false;
+                        EXIT FOR // BREAK
+                    endif
+
+                ENDFOR
+                if addToList=true or floorRequested is not in ElevatorFloorUpRequestList THEN
+                    ADD floorRequested TO ElevatorFloorUpRequestList
+                    SORT ascending order ElevatorFloorUpRequestList
+                endif
+            else if buttonDirection is down THEN
+                // verify if floor requested already in the ElevatorFloorDownRequestList before adding to the list
+                SET addToList=true;
+                FOR EACH ElevatorFloorDownRequest IN ElevatorFloorDownRequestList
+                    if floorRequested = ElevatorFloorDownRequest THEN
+                        SET addToList=false;
+                        EXIT FOR // BREAK
+                    endif
+
+                ENDFOR
+                if addToList=true or floorRequested is not in ElevatorFloorDownRequestList THEN
+                    ADD floorRequested TO ElevatorFloorDownRequestList
+                    SORT descending order ElevatorFloorDownRequestList
+                endif
+
+            endif
+
+        else
+            if floorRequested is higher than ElevatorFloor THEN
+                // verify if floor requested already in the ElevatorFloorUpRequestList before adding to the list
+                // bside and ElevatorDirection is up
+                SET addToList=true;
+                FOR EACH ElevatorFloorUpRequest IN ElevatorFloorUpRequestList
+                    if floorRequested = ElevatorFloorUpRequest THEN
+                        SET addToList=false;
+                        EXIT FOR // BREAK
+                    endif
+
+                ENDFOR
+                if addToList=true or floorRequested is not in ElevatorFloorUpRequestList THEN
+                    ADD floorRequested TO ElevatorFloorUpRequestList
+                    SORT ascending order ElevatorFloorUpRequestList
+                endif
+            endif
+            else if floorRequested is lower than ElevatorFloor THEN
+                // verify if floor requested already in the ElevatorFloorDownRequestList before adding to the list
+                SET addToList=true;
+                FOR EACH ElevatorFloorDownRequest IN ElevatorFloorDownRequestList
+                    if floorRequested = ElevatorFloorDownRequest THEN
+                        SET addToList=false;
+                        EXIT FOR // BREAK
+                    endif
+
+                ENDFOR
+                if addToList=true or floorRequested is not in ElevatorFloorDownRequestList THEN
+                    ADD floorRequested TO ElevatorFloorDownRequestList
+                    SORT descending order ElevatorFloorDownRequestList
+                endif
+            endif
+            // not sure necessary case to treat (do something)
+            else if floorRequested is equal to ElevatorFloor THEN
+            endif
+        endif
+  
+    ENDSEQUENCE
+
+    SEQUENCE elevatorRemoveFloorRequestList USING  ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
+        if buttonDirection is up THEN
+            FOR EACH ElevatorFloorUpRequest IN ElevatorFloorUpRequestList
+                if floorRequested is equal to ElevatorFloorUpRequest THEN
+                    REMOVE ElevatorFloorUpRequest FROM ElevatorFloorUpRequestList
+                endif
+            ENDFOR
+        endif
+        else if buttonDirection is down THEN
+            FOR EACH ElevatorFloorDownRequest IN ElevatorFloorDownRequestList
+                if floorRequested is equal to ElevatorFloorDownRequest THEN
+                    REMOVE ElevatorFloorDownRequest FROM ElevatorFloorDownRequestList
+                endif
+            ENDFOR
+        endif
+    ENDSEQUENCE
 
     SEQUENCE createButtonList USING floor_amount
         SET buttonId to 1
@@ -221,108 +319,121 @@ DEFINE Elevator USING origin, destination, doorOpen, doorClosed, direction, id A
         ENDFOR
     ENDSEQUENCE
 
-    SEQUENCE updateDirection USING 
+    SEQUENCE updateElevatorDirection USING ElevatorFloor ElevatorDestination
+        IF ElevatorFloor is higher than ElevatorDestination THEN
+            SET ElevatorDirection TO down
+        else IF ElevatorFloor is lower than ElevatorDestination THEN
+            SET ElevatorDirection TO up 
+        endif 
     ENDSEQUENCE
 
-    SEQUENCE updateOrigin USING 
+    SEQUENCE updateElevatorFloor USING ElevatorFloor ElevatorDestination
+        IF ElevatorFloor is higher than ElevatorDestination THEN
+            DECREMENT ElevatorFloor
+        else IF ElevatorFloor is lower than ElevatorDestination THEN
+            INCREMENT ElevatorFloor
+        endif 
     ENDSEQUENCE
 
-    SEQUENCE updateDestination USING 
+    SEQUENCE updateElevatorDestination USING ElevatorDirection, ElevatorFloorDownRequestList AND ElevatorFloorUpRequestList
+        IF ElevatorDirection is up AND ElevatorFloorUpRequestList is not empty THEN
+            SET ElevatorDestination TO first item of ElevatorFloorUpRequestList
+        else IF ElevatorDirection is down AND ElevatorFloorDownRequestList is not empty THEN
+            SET ElevatorDestination TO first item of ElevatorFloorDownRequestList
+        endif 
     ENDSEQUENCE
 
     SEQUENCE updateDoor USING 
     ENDSEQUENCE
 
-    SEQUENCE addFloorRequestList USING 
+    SEQUENCE updateOrigin USING 
     ENDSEQUENCE
-
-    SEQUENCE removeFloorRequestList USING 
-    ENDSEQUENCE
-
-    SEQUENCE addFButtonFloorRequestedList USING 
-    ENDSEQUENCE
-
-    SEQUENCE removeButtonFloorRequestedList USING 
-    ENDSEQUENCE
-
 
 
 ENDDEFINE
-/*******************************************************************************
-SET elevator1 TO INSTANTIATE Elevator WITH 1, null, false, true, null, 1 AND online,
-SET elevator2 TO INSTANTIATE Elevator WITH 10, null, false, true, null, 2 AND online,
-// 2 for elevator_amount and 10 for floor_amount
-SET column1 status TO offline
-/*******************************************************************************
-
-Start Class Elevator
-    arguments direction, idle, origin, destination and number of floors
-
-    // declare variables
-    Set array elev_floor_upcall_list to null
-
-    Set array elev_floor_downcall_list to null
-
-    Set array floorbuttons to (Button1,..., ButtonnumberOfFloors)
-
-    Set floorStart to origin (link to elev_floor_upcall_list and elev_floor_downcall_list)
-
-    Set floorEnd to destination (link to elev_floor_upcall_list and elev_floor_downcall_list)
-
-    Set notMoving to idle (true or false)
-
-    Set dir to direction (up or down or null)
-
-    Contains floorbuttons inside elevators, elevator doors
-
-End Class Elevator
-/*******************************************************************************
-
 
 // definition of the class Button (related to floor and column, light on if pressed, light off if command resolved or default)
-DEFINE Elevator USING origin, destination, doorOpen, doorClosed, direction, id AND status:
+DEFINE Button USING floor, direction, id AND status:
     ID: id,
-    Status: status, // online, offline
-nFloorRequestedList USING 
-    ENDSEQUENCE
-    
-    SEQUENCE removeButtonFloorRequestedList USING 
-    ENDSEQUENCE
-
-
+    Status: status, // pressed, notPressed
+    Floor: floor, 
+    Light: off,
+    Direction: direction // up, down
 
 ENDDEFINE
+DEFINE UpButton USING floor, direction, id AND status:
+    ID: id,
+    Status: status, // pressed, notPressed
+    Floor: floor, 
+    Light: off,
+    Direction: up
+
+ENDDEFINE
+DEFINE DownButton USING floor, direction, id AND status:
+    ID: id,
+    Status: status, // pressed, notPressed
+    Floor: floor, 
+    Light: off,
+    Direction: down
+
+ENDDEFINE
+DEFINE FloorButton USING floorRequested, id AND status:
+    ID: id,
+    Status: status, // pressed, notPressed
+    FloorRequested: floorRequested, 
+    Light: off,
+    Direction: direction // up, down
+
+ENDDEFINE
+DEFINE OpenDoorButton USING id AND status:
+    ID: id,
+    Status: status, // pressed, notPressed
+ENDDEFINE
+DEFINE CloseDoorButton USING id AND status:
+    ID: id,
+    Status: status, // pressed, notPressed
+ENDDEFINE
+
+
+
+SEQUENCE initialize 
+    SET column_amount to 1
+    SET elevator_amount to 2
+    SET floor_amount to 10
+
+    FOR i= 1 TO column_amount
+        SET columni TO INSTANTIATE Column WITH i, online
+    ENDFOR
+
+    FOR EACH Column IN ColumnList
+        FOR i= 1 TO elevator_amount
+            SET elevatori TO INSTANTIATE Elevator WITH 1, 1, null, false, true, idle, i AND online
+        ENDFOR
+
+        FOR i= 1 TO floor_amount - 1
+            SET UpButtoni TO INSTANTIATE UpButton WITH i, up, i AND notPressed
+        ENDFOR
+
+        FOR i= 1 TO floor_amount - 1
+            SET DownButtoni TO INSTANTIATE DownButton WITH i+1, down, i AND notPressed
+        ENDFOR
+
+    ENDFOR
+
+    FOR EACH Elevator IN ElevatorList
+        FOR i= 1 TO floor_amount
+            SET floorButtoni TO INSTANTIATE FloorButton WITH i, i AND notPressed
+        ENDFOR
+
+        SET ElevatorOpenDoorButton TO INSTANTIATE OpenDoorButton WITH open AND notPressed
+        SET ElevatorCloseDoorButton TO INSTANTIATE CloseDoorButton WITH close AND notPressed
+
+    ENDFOR
+
+ENDSEQUENCE
+
+CALL initialize
 /*******************************************************************************
-SET elevator1 TO INSTANTIATE Elevator WITH 1, null, false, true, null, 1 AND online,
-SET elevator2 TO INSTANTIATE Elevator WITH 10, null, false, true, null, 2 AND online,
-// 2 for elevator_amount and 10 for floor_amount
-SET column1 status TO offline
-/*******************************************************************************
-
-Start Class floorButton
-    arguments timePressed, timeOff, direction and onStatus (validate time arguments there or in method)
-    // declare variables
-    Set dir to direction (up or down or null)
-
-    Set isPressed to onStatus (true or false)
-
-    Contains nothing
-
-End Class floorButton
-
-// definition of the class Door
-Start Class Door
-    arguments open and close
-    // declare variables
-    Set isOpen to open (true or false)
-
-    Set isClosed to close (true or false)
-
-    set delayToClose to 7 (7 seconds)
-
-    Contains nothing
-
-End Class Door
 /*******************************************************************************
 WHILE columnStatus IS online
     // add for each column ? (one here) do this to commercial algo
@@ -343,24 +454,76 @@ WHILE columnStatus IS online
 
     // call sequences
 
-    WHILE  elevatorStatusOnlineAmount > 0
+    WHILE  elevatorStatusOnlineAmount is greater than 0
         WHEN FloorUpRequestList is NOT empty OR FloorDownRequestList is NOT empty
-            CALL columnFindElevator with ElevatorOriginList, ElevatorDirectionList, FloorUpRequestList AND FloorDownRequestList
+            CALL columnFindElevator with ElevatorFloorList, ElevatorDirectionList, FloorUpRequestList AND FloorDownRequestList
 
+        SET elevatorStatusOnlineAmount TO 0
         FOR EACH Elevator IN ElevatorList
+            if elevatorStatus is Online THEN
+                INCREMENT elevatorStatusOnlineAmount
+            endif
+            if Elevator is outOfOrder or not safe THEN
+                SET elevatorStatus TO offline
+            endif
+            FOR EACH FloorButton IN FloorButtonList
+                WHEN user press FloorButton
+                    if ElevatorFloor is lower than FloorButtonFloor THEN
+                        SET buttonDirection to up
+                    else if ElevatorFloor is higher than FloorButtonFloor THEN
+                        SET buttonDirection to down
+                    else
+                        open doors
+                        close doors after a delay of 7 seconds
+                    endif
+                    SET floorRequested to FloorButtonFloor
+                    CALL elevatorAddFloorRequestList with buttonDirection AND floorRequested
+            ENDFOR
+
+            WHEN ElevatorFloor is equal to ElevatorDestination
+                CALL elevatorRemoveFloorRequestList with ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND ElevatorDestination
+                if ElevatorDirection is up THEN 
+                    SET ElevatorDestination TO first item of ElevatorFloorUpRequestList
+                    turn the light off of FloorButton of this floor
+                    turn the light off of UpButton of this floor
+                   set status of UpButton of this floor to not pressed
+                else if ElevatorDirection is down THEN 
+                    SET ElevatorDestination TO first item of ElevatorFloorDownRequestList
+                    turn the light off of FloorButton of this floor
+                    turn the light off of DownButton of this floor
+                    set status of DownButton of this floor to not pressed
+                endif
+                stop elevator
+                open doors
+                close doors after a delay of 7 seconds
+                move elevator to the next floor if list is not empty
+                if ElevatorDirection is up THEN 
+                    INCREMENT ElevatorFloor
+                else if ElevatorDirection is down THEN 
+                    DECREMENT ElevatorFloor
+                endif
+
+            WHEN ElevatorFloor is lower than ElevatorDestination and ElevatorDirection is up
+                INCREMENT ElevatorFloor
+
+            WHEN ElevatorFloor is higher than ElevatorDestination and ElevatorDirection is down               
+                DECREMENT ElevatorFloor
+
+
+
             FOR EACH FloorButton IN FloorButtonList
                 WHEN user press FloorButton
                     SET floorRequested to FloorButtonFloor
-                    if floorRequested = elevatorOrigin THEN
+                    if floorRequested = ElevatorFloor THEN
                         SET buttonDirection to idle //null
                     endif
-                    else if floorRequested > elevatorOrigin THEN
+                    else if floorRequested is higher than ElevatorFloor THEN
                         SET buttonDirection to up
                     endif
-                    else if floorRequested < elevatorOrigin THEN
+                    else if floorRequested is lower than ElevatorFloor THEN
                         SET buttonDirection to down
                     endif
-                  CALL elevatorAddFloorRequestList with buttonDirection AND floorRequested
+                  CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
 
             ENDFOR
         ENDFOR
