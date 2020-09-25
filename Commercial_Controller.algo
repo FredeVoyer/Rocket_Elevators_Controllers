@@ -1,223 +1,36 @@
-'//Pseudocode for residential building elevators controller (controller algorithm)
+'//Pseudocode for commercial building elevators (classic) controller (controller algorithm)
+
+'Note: I used "'" and or "//" for comments or removing stuff from the algo'
 
 SET battery_amount to 1
 SET column_amount to 4
-SET elevator_amount to 3 'by column'
+SET _ElevatorPerColAmount to 3 'per column'
 SET floor_amount to 66
 SET basement_amount to 6
 
 
 
 '// definition of the class Battery
-DEFINE Battery USING id, status, _ColumnAmount, _ElevatorPerColAmount, _floor_amount, _MinFloor, _MaxFloor
+DEFINE Battery USING id, status, _ColumnAmount, _ElevatorPerColAmount, _MinFloor, _MaxFloor
     ID: id,
     Status: status, 'online, offline'
     ColumnAmount : _ColumnAmount,
     ElevatorPerColAmount: _ElevatorPerColAmount,
-    floor_amount: _floor_amount,
+    '//floor_amount: _floor_amount,
     MinFloor: _MinFloor,
     MaxFloor: _MaxFloor,
     ColumnList: SET to empty List,
     ColumnMinFloorList: SET to empty List,
     ColumnMaxFloorList: SET to empty List,
-    'ElevatorList: SET to empty List,
-    UpButtonList: SET to empty List,
-    DownButtonList: SET to empty List,
-
-    UpButtonFloorList: SET to empty List,
-    DownButtonFloorList: SET to empty List,
-   
-    FloorRequestList: SET to empty List,
-    FloorUpRequestList: SET to empty List,
-    FloorDownRequestList: SET to empty List
     
-    SEQUENCE batteryAddFloorRequestList USING buttonDirection AND floorRequested
-        if buttonDirection = up THEN
-            '// verify if floor requested already in the FloorUpRequestList before adding to the list
-            SET addToList to true;
-            FOR EACH FloorUpRequest IN FloorUpRequestList
-                if floorRequested = FloorUpRequest THEN
-                    SET addToList to false;
-                    EXIT FOR '// BREAK
-                endif
-
-            ENDFOR
-            if addToList=true or floorRequested is not in FloorUpRequestList THEN
-                ADD floorRequested TO FloorUpRequestList
-                SORT ascending order FloorUpRequestList
-           endif
-        endif
-        else if buttonDirection = down THEN
-            '// verify if floor requested already in the FloorDownRequestList before adding to the list
-            SET addToList to true;
-            FOR EACH FloorDownRequest IN FloorDownRequestList
-                if floorRequested = FloorDownRequest THEN
-                    SET addToList to false;
-                    EXIT FOR '// BREAK
-                endif
-
-            ENDFOR
-            if addToList=true or floorRequested is not in FloorDownRequestList THEN
-                ADD floorRequested TO FloorDownRequestList
-                SORT descending order FloorDownRequestList
-            endif
-        endif
-    ENDSEQUENCE
-
-    SEQUENCE batteryRemoveFloorRequestList USING  FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
-         if buttonDirection is up THEN
-            FOR EACH FloorUpRequest IN FloorUpRequestList
-                if floorRequested is equal to FloorUpRequest THEN
-                    REMOVE FloorUpRequest FROM FloorUpRequestList
-                endif
-            ENDFOR
-        endif
-        else if buttonDirection is down THEN
-            FOR EACH FloorDownRequest IN FloorDownRequestList
-                if floorRequested is equal to FloorDownRequest THEN
-                    REMOVE FloorDownRequest FROM FloorDownRequestList
-                endif
-            ENDFOR
-        endif
-    ENDSEQUENCE
-
-    SEQUENCE batteryFindColumn USING ElevatorDestination, ElevatorFloorList, ElevatorDirectionList, FloorUpRequestList AND FloorDownRequestList
-        '// case FloorUpRequestList
-        SET ElevatorUpSelected to null
-        SET minFloorUpRequested to first item of FloorUpRequestList
-        SET maxFloorUpRequested to last item of FloorUpRequestList
-           '' // select first elevator moving, refine with closest one or one that can do all the list
-        FOR EACH Elevator IN ElevatorList
-            COMPUTE distance between the Elevator and maxFloorUpRequested
-
-            if ElevatorDirection is up AND ElevatorFloor <= maxFloorUpRequested AND Elevator has lowest distance from maxFloorUpRequested THEN
-                SET ElevatorUpSelected TO Elevator
-                FOR ElevatorUpSelected IN ElevatorList
-                SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                SET ElevatorFloorDownRequestList TO FloorDownRequestList
-
-                    FOR EACH FloorUpRequest IN FloorUpRequestList
-                        if FloorUpRequest is higher or equal to ElevatorFloor
-                            CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
-                            CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
-                        endif
-                    ENDFOR
-                ENDFOR
-
-                EXIT FOR '// BREAK
-            endif
-        ENDFOR
-            '// select lastly elevator not moving (idle and with no destination) and the closest to clear (empty) FloorUpRequestList
-        if ElevatorUpSelected = null THEN
-            FOR EACH Elevator IN ElevatorList
-                COMPUTE distance between the Elevator and maxFloorUpRequested
-
-                if ElevatorDirection is idle AND ElevatorDestination is null AND Elevator has lowest distance from maxFloorUpRequested THEN
-                    SET buttonDirection TO up
-                    SET ElevatorUpSelected TO Elevator
-                    FOR ElevatorUpSelected IN ElevatorList
-                        SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                        SET ElevatorFloorDownRequestList TO FloorDownRequestList
-                        FOR EACH FloorUpRequest IN FloorUpRequestList
-                                CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
-                                CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
-                        ENDFOR
-                    ENDFOR
-                   EXIT FOR '// BREAK
-                endif
-            ENDFOR
-        endif
-
-        '// case FloorDownRequestList
-        SET ElevatorDownSelected to null
-        SET minFloorDownRequested to first item of FloorDownRequestList
-        SET maxFloorDownRequested to last item of FloorDownRequestList
-            '// select first elevator moving, refine with closest one  or one that can do all the list
-        FOR EACH Elevator IN ElevatorList
-            COMPUTE distance between the Elevator and minFloorDownRequested
-
-            if ElevatorDirection is down AND ElevatorFloor >= minFloorDownRequested AND Elevator has lowest distance from minFloorDownRequested THEN
-                SET ElevatorDownSelected TO Elevator
-                FOR ElevatorDownSelected IN ElevatorList
-                    SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                    SET ElevatorFloorDownRequestList TO FloorDownRequestList
-                    FOR EACH FloorDownRequest IN FloorDownRequestList
-                        if FloorDownRequest is lower or equal to ElevatorFloor
-                            CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
-                            CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
-                        endif
-                    ENDFOR
-                ENDFOR
-                EXIT FOR '// BREAK
-            endif
-        ENDFOR
-            '// select lastly elevator not moving (idle and with no destination) to clear (empty) FloorDownRequestList
-        if ElevatorDownSelected = null THEN
-            FOR EACH Elevator IN ElevatorList
-                'case not moving'
-                COMPUTE distance between the Elevator and minFloorDownRequested
-             
-                if ElevatorDirection is idle AND ElevatorDestination is null AND Elevator has lowest distance from minFloorDownRequested THEN
-                    SET buttonDirection TO down
-                    SET ElevatorDownSelected TO Elevator
-                    FOR ElevatorDownSelected IN ElevatorList
-                        SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                        SET ElevatorFloorDownRequestList TO FloorDownRequestList
-                        FOR EACH FloorDownRequest IN FloorDownRequestList
-                            if FloorDownRequest is lower or equal to ElevatorFloor
-                                CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
-                                CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
-                            endif
-                        ENDFOR
-                    ENDFOR
-                    EXIT FOR '// BREAK
-                endif
-            ENDFOR
-        endif
-
-    ENDSEQUENCE
-    'remove done below initiate'
-    SEQUENCE createElevatorList USING elevator_amount
-        SET elevId to 1
-        FOR elevator= 0 TO elevator_amount - 1
-            SET ElevatorList[elevator] TO "Elevator elevId"
-            INCREMENT elevId
+    SEQUENCE createColumnList USING _ColumnAmount, _ElevatorPerColAmount, _MinFloor, _MaxFloor
+        SET iterator to 1
+        FOR _ColumnAmount
+            INIT newColumn TO INSTANTIATE WITH iterator, online, _ElevatorPerColAmount, _MinFloor, _MaxFloor
+            ADD newColumn TO ColumnList
+            INCREMENT iterator
         ENDFOR
     ENDSEQUENCE
-    'remove done below initiate'
-    SEQUENCE createUpButtonList USING floor_amount
-        SET buttonId to 1
-        FOR button= 0 TO floor_amount - 2
-            SET UpButtonList[button] TO "UpButton buttonId"
-            INCREMENT buttonId
-        ENDFOR
-    ENDSEQUENCE
-    'remove done below initiate'
-    SEQUENCE createDownButtonList USING floor_amount
-        SET buttonId to 1
-        FOR button= 0 TO floor_amount - 2
-            SET DownButtonList[button] TO "DownButton buttonId"
-            INCREMENT buttonId
-        ENDFOR
-    ENDSEQUENCE
-    'remove done below initiate'
-    SEQUENCE createUpButtonFloorList USING floor_amount
-        SET floorId to 1
-        FOR floor= 0 TO floor_amount - 2
-            SET UpButtonFloorList[floor] TO floorId
-            INCREMENT floorId
-        ENDFOR
-    ENDSEQUENCE
-    'remove done below initiate'
-    SEQUENCE createDownButtonFloorList USING floor_amount
-        SET floorId to 2
-        FOR floor= 0 TO floor_amount - 2
-            SET DownButtonFloorList[floor] TO floorId
-            INCREMENT floorId
-        ENDFOR
-    ENDSEQUENCE
-
-
 
 ENDDEFINE
 
@@ -227,9 +40,11 @@ DEFINE Column USING id, status, _ElevatorPerColAmount, _floor_amount, _MinFloor,
     Status: status,
     ElevatorPerColAmount: _ElevatorPerColAmount,
     floor_amount: _floor_amount
-    MinFloor: _MinFloor,
-    MaxFloor: _MaxFloor,
+    MinFloor: _MinFloor, 'excluding mainfloor'
+    MaxFloor: _MaxFloor, 'excluding mainfloor'
 
+    outsideElevatorCurrentFloorDisplayList: SET to empty List,
+    insideElevatorCurrentFloorDisplayList: SET to empty List,
     ElevatorList: SET to empty List,
     UpButtonList: SET to empty List,
     DownButtonList: SET to empty List,
@@ -237,11 +52,11 @@ DEFINE Column USING id, status, _ElevatorPerColAmount, _floor_amount, _MinFloor,
     UpButtonFloorList: SET to empty List,
     DownButtonFloorList: SET to empty List,
    
-    ElevatorFloorUpRequestList: SET to empty List,
+    FloorUpRequestList: SET to empty List,
     FloorDownRequestList: SET to empty List
 
      
-    SEQUENCE columnAddFloorRequestList USING buttonDirection AND floorRequested
+    SEQUENCE columnAddFloorRequestList USING FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
         if buttonDirection = up THEN
             '// verify if floor requested already in the FloorUpRequestList before adding to the list
             SET addToList to true;
@@ -291,7 +106,7 @@ DEFINE Column USING id, status, _ElevatorPerColAmount, _floor_amount, _MinFloor,
         endif
     ENDSEQUENCE
 
-    SEQUENCE columnFindElevator USING ElevatorDestination, ElevatorFloorList, ElevatorDirectionList, FloorUpRequestList AND FloorDownRequestList
+    SEQUENCE columnFindElevator USING ElevatorList, ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
         '// case FloorUpRequestList
         SET ElevatorUpSelected to null
         SET minFloorUpRequested to first item of FloorUpRequestList
@@ -303,18 +118,18 @@ DEFINE Column USING id, status, _ElevatorPerColAmount, _floor_amount, _MinFloor,
             if ElevatorDirection is up AND ElevatorFloor <= maxFloorUpRequested AND Elevator has lowest distance from maxFloorUpRequested THEN
                 SET ElevatorUpSelected TO Elevator
                 FOR ElevatorUpSelected IN ElevatorList
-                SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                SET ElevatorFloorDownRequestList TO FloorDownRequestList
+                    '//SET ElevatorFloorUpRequestList TO FloorUpRequestList
+                    '//SET ElevatorFloorDownRequestList TO FloorDownRequestList
 
                     FOR EACH FloorUpRequest IN FloorUpRequestList
                         if FloorUpRequest is higher or equal to ElevatorFloor
-                            CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
+                            CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
                             CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
                         endif
                     ENDFOR
                 ENDFOR
 
-                EXIT FOR '// BREAK
+                EXIT FOR '// BREAK to avoid picking more than one elevator at the same distance from floor requested
             endif
         ENDFOR
             '// select lastly elevator not moving (idle and with no destination) and the closest to clear (empty) FloorUpRequestList
@@ -326,14 +141,14 @@ DEFINE Column USING id, status, _ElevatorPerColAmount, _floor_amount, _MinFloor,
                     SET buttonDirection TO up
                     SET ElevatorUpSelected TO Elevator
                     FOR ElevatorUpSelected IN ElevatorList
-                        SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                        SET ElevatorFloorDownRequestList TO FloorDownRequestList
+                        '//SET ElevatorFloorUpRequestList TO FloorUpRequestList
+                        '//SET ElevatorFloorDownRequestList TO FloorDownRequestList
                         FOR EACH FloorUpRequest IN FloorUpRequestList
-                                CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
+                                CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
                                 CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
                         ENDFOR
                     ENDFOR
-                   EXIT FOR '// BREAK
+                EXIT FOR '// BREAK to avoid picking more than one elevator at the same distance from floor requested
                 endif
             ENDFOR
         endif
@@ -349,16 +164,16 @@ DEFINE Column USING id, status, _ElevatorPerColAmount, _floor_amount, _MinFloor,
             if ElevatorDirection is down AND ElevatorFloor >= minFloorDownRequested AND Elevator has lowest distance from minFloorDownRequested THEN
                 SET ElevatorDownSelected TO Elevator
                 FOR ElevatorDownSelected IN ElevatorList
-                    SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                    SET ElevatorFloorDownRequestList TO FloorDownRequestList
+                    '//SET ElevatorFloorUpRequestList TO FloorUpRequestList
+                    '//SET ElevatorFloorDownRequestList TO FloorDownRequestList
                     FOR EACH FloorDownRequest IN FloorDownRequestList
                         if FloorDownRequest is lower or equal to ElevatorFloor
-                            CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
+                            CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
                             CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
                         endif
                     ENDFOR
                 ENDFOR
-                EXIT FOR '// BREAK
+                EXIT FOR '// BREAK to avoid picking more than one elevator at the same distance from floor requested
             endif
         ENDFOR
             '// select lastly elevator not moving (idle and with no destination) to clear (empty) FloorDownRequestList
@@ -371,16 +186,16 @@ DEFINE Column USING id, status, _ElevatorPerColAmount, _floor_amount, _MinFloor,
                     SET buttonDirection TO down
                     SET ElevatorDownSelected TO Elevator
                     FOR ElevatorDownSelected IN ElevatorList
-                        SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                        SET ElevatorFloorDownRequestList TO FloorDownRequestList
+                        '//SET ElevatorFloorUpRequestList TO FloorUpRequestList
+                        '//SET ElevatorFloorDownRequestList TO FloorDownRequestList
                         FOR EACH FloorDownRequest IN FloorDownRequestList
                             if FloorDownRequest is lower or equal to ElevatorFloor
-                                CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
+                                CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
                                 CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
                             endif
                         ENDFOR
                     ENDFOR
-                    EXIT FOR '// BREAK
+                    EXIT FOR '// BREAK to avoid picking more than one elevator at the same distance from floor requested
                 endif
             ENDFOR
         endif
@@ -430,15 +245,18 @@ DEFINE Column USING id, status, _ElevatorPerColAmount, _floor_amount, _MinFloor,
 ENDDEFINE
 
 '// definition of the class Elevator
-DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, direction, id AND status:
+DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, direction, id AND status
     ID: id,
     Status: status, '// online, offline
     Direction : direction, '// null (idle not moving if destination is null else moving), up, down (moving for both)
+    Door: _Door 'open closed'
     DoorOpen: doorOpen, '// bool true false
     DoorClosed: doorClosed, '// bool true false
     Floor: floor, '// floor domain (1,...,10)
     Destination: destination, '// floor domain (1,...,10) and null if Direction to null (idle, not moving; else moving)
     Origin: origin, '// floor domain (1,...,10)
+    MaxWeight: 2500, '// pounds'
+    ElevatorCurrentFloorDisplay: _ElevatorCurrentFloorDisplay 'display floor object below add method displayElevatorCurrentFloor'
     FloorButtonList: SET to empty List,
     FloorButtonFloorList: SET to empty List,
     ButtonFloorRequestedList: SET to empty List,
@@ -447,34 +265,35 @@ DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, directio
     FloorDownRequestList: SET to empty List
 
      
-    SEQUENCE elevatorAddFloorRequestList USING ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
+    SEQUENCE elevatorAddFloorRequestList USING ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
+
         '// case NOT MOVING:ElevatorFloorUpRequestList, ElevatorFloorDownRequestList are empty before the call
         if ElevatorDirection is idle AND ElevatorDestination is null THEN
             if buttonDirection is up THEN
                 '// verify if floor requested already in the ElevatorFloorUpRequestList before adding to the list
-                SET addToList=true;
+                SET addToList TO true;
                 FOR EACH ElevatorFloorUpRequest IN ElevatorFloorUpRequestList
-                    if floorRequested = ElevatorFloorUpRequest THEN
-                        SET addToList=false;
+                    if floorRequested is equal to ElevatorFloorUpRequest THEN
+                        SET addToList TO false;
                         EXIT FOR '// BREAK
                     endif
 
                 ENDFOR
-                if addToList=true or floorRequested is not in ElevatorFloorUpRequestList THEN
+                if addToList is true or floorRequested is not in ElevatorFloorUpRequestList THEN
                     ADD floorRequested TO ElevatorFloorUpRequestList
                     SORT ascending order ElevatorFloorUpRequestList
                 endif
             else if buttonDirection is down THEN
-                // verify if floor requested already in the ElevatorFloorDownRequestList before adding to the list
-                SET addToList=true;
+                '// verify if floor requested already in the ElevatorFloorDownRequestList before adding to the list
+                SET addToList TOtrue;
                 FOR EACH ElevatorFloorDownRequest IN ElevatorFloorDownRequestList
-                    if floorRequested = ElevatorFloorDownRequest THEN
-                        SET addToList=false;
-                        EXIT FOR // BREAK
+                    if floorRequested is equal to ElevatorFloorDownRequest THEN
+                        SET addToList TO false;
+                        EXIT FOR '// BREAK
                     endif
 
                 ENDFOR
-                if addToList=true or floorRequested is not in ElevatorFloorDownRequestList THEN
+                if addToList is equal to true or floorRequested is not in ElevatorFloorDownRequestList THEN
                     ADD floorRequested TO ElevatorFloorDownRequestList
                     SORT descending order ElevatorFloorDownRequestList
                 endif
@@ -484,30 +303,30 @@ DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, directio
         else
             if floorRequested is higher than ElevatorFloor THEN
                 '// verify if floor requested already in the ElevatorFloorUpRequestList before adding to the list
-                SET addToList=true;
+                SET addToList TO true;
                 FOR EACH ElevatorFloorUpRequest IN ElevatorFloorUpRequestList
-                    if floorRequested = ElevatorFloorUpRequest THEN
-                        SET addToList=false;
-                        EXIT FOR // BREAK
+                    if floorRequested is equal to ElevatorFloorUpRequest THEN
+                        SET addToList TO false;
+                        EXIT FOR '// BREAK
                     endif
 
                 ENDFOR
-                if addToList=true or floorRequested is not in ElevatorFloorUpRequestList THEN
+                if addToList is equal to true or floorRequested is not in ElevatorFloorUpRequestList THEN
                     ADD floorRequested TO ElevatorFloorUpRequestList
                     SORT ascending order ElevatorFloorUpRequestList
                 endif
             endif
             else if floorRequested is lower than ElevatorFloor THEN
                 '// verify if floor requested already in the ElevatorFloorDownRequestList before adding to the list
-                SET addToList=true;
+                SET addToList TO true;
                 FOR EACH ElevatorFloorDownRequest IN ElevatorFloorDownRequestList
-                    if floorRequested = ElevatorFloorDownRequest THEN
+                    if floorRequested is equal to ElevatorFloorDownRequest THEN
                         SET addToList=false;
                         EXIT FOR '// BREAK
                     endif
 
                 ENDFOR
-                if addToList=true or floorRequested is not in ElevatorFloorDownRequestList THEN
+                if addToList is equal to true or floorRequested is not in ElevatorFloorDownRequestList THEN
                     ADD floorRequested TO ElevatorFloorDownRequestList
                     SORT descending order ElevatorFloorDownRequestList
                 endif
@@ -534,22 +353,6 @@ DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, directio
                 endif
             ENDFOR
         endif
-    ENDSEQUENCE
-    'remove'
-    SEQUENCE createButtonList USING floor_amount
-        SET buttonId to 1
-        FOR button= 0 TO floor_amount - 1
-            SET ButtonList[button] TO "Button buttonId"
-            INCREMENT buttonId
-        ENDFOR
-    ENDSEQUENCE
-    'remove'
-    SEQUENCE ButtonFloorRequestedList USING floor_amount
-        SET floorId to 1
-        FOR floor= 0 TO floor_amount - 1
-            SET ButtonFloorRequestedList[floor] TO floorId
-            INCREMENT floorId
-        ENDFOR
     ENDSEQUENCE
     'verify done lower'
     SEQUENCE updateElevatorDirection USING ElevatorFloor ElevatorDestination
@@ -586,7 +389,7 @@ DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, directio
 ENDDEFINE
 
 '// definition of the class Button (related to floor and column, light on if pressed, light off if command resolved or default)
-DEFINE Button USING floor, direction, id AND status:
+DEFINE Button USING floor, direction, id AND status
     ID: id,
     Status: status, '// pressed, notPressed
     Floor: floor, 
@@ -594,7 +397,7 @@ DEFINE Button USING floor, direction, id AND status:
     Direction: direction '// up, down
 
 ENDDEFINE
-DEFINE UpButton USING floor, direction, id AND status:
+DEFINE UpButton USING floor, direction, id AND status
     ID: id,
     Status: status, '// pressed, notPressed
     Floor: floor, 
@@ -602,7 +405,7 @@ DEFINE UpButton USING floor, direction, id AND status:
     Direction: up
 
 ENDDEFINE
-DEFINE DownButton USING floor, direction, id AND status:
+DEFINE DownButton USING floor, direction, id AND status
     ID: id,
     Status: status, '// pressed, notPressed
     Floor: floor, 
@@ -610,7 +413,7 @@ DEFINE DownButton USING floor, direction, id AND status:
     Direction: down
 
 ENDDEFINE
-DEFINE FloorButton USING floorRequested, id AND status:
+DEFINE FloorButton USING floorRequested, id AND status
     ID: id,
     Status: status, '// pressed, notPressed
     FloorRequested: floorRequested, 
@@ -618,83 +421,207 @@ DEFINE FloorButton USING floorRequested, id AND status:
     Direction: direction '// up, down
 
 ENDDEFINE
-DEFINE OpenDoorButton USING id AND status:
+DEFINE OpenDoorButton USING id AND status
     ID: id,
     Status: status, '// pressed, notPressed
 ENDDEFINE
-DEFINE CloseDoorButton USING id AND status:
+DEFINE CloseDoorButton USING id AND status
     ID: id,
     Status: status, '//' pressed, notPressed
 ENDDEFINE
+DEFINE Door 
+    ID: id,
+    Status: closed, '//' open, closed
 
+    SEQUENCE openDoor
+        OPEN the door
+        SET Status TO open
+    ENDSEQUENCE
 
-'Floor display class'
-SEQUENCE initialize 
+    SEQUENCE closeDoor
+        CLOSE the door
+        SET Status TO closed
+    ENDSEQUENCE
+
+ENDDEFINE
+
+'Floor display class ElevatorCurrentFloorDisplay'
+DEFINE outsideElevatorCurrentFloorDisplay USING ElevatorFloor, floor', id 
+    'ID: id,
+    Status: online, '// online offline
+    Floor: floor, 
+    CurrentElevatorFloor: ElevatorFloor
+
+    SEQUENCE displayOutsideElevatorCurrentFloor USING ElevatorFloor
+        Display ElevatorFloor
+    ENDSEQUENCE
+ENDDEFINE
+
+DEFINE insideElevatorCurrentFloorDisplay USING ElevatorFloor', id 
+    'ID: id,
+    Status: online, '// online offline
+    CurrentElevatorFloor: ElevatorFloor
+
+    SEQUENCE displayInsideElevatorCurrentFloor USING ElevatorFloor
+        Display ElevatorFloor
+    ENDSEQUENCE
+ENDDEFINE
+
+'//For each column there is a board displaying the floors served so the user can use the right one'
+
+'//Column A: B6 to B1 + RC 
+'//Column B: 2 to 20 + RC 
+'//Column C: 21 to 40 + RC
+'//Column D: 41 to 60 + RC
+
+'//SEQUENCE initialize *******************************************************************************************************************
     SET battery_amount to 1
     SET column_amount to 4
-    SET elevator_amount to 3 'by column'
+    SET elevator_amount to 3 'per column'
     SET floor_amount to 66
     SET basement_amount to 6
 
-    FOR i= 1 TO battery_amount
-        SET batteryi TO INSTANTIATE Battery WITH i, online
-    ENDFOR
+    '//FOR i=battery_amount
+    SET battery1 TO INSTANTIATE Battery WITH 1, online, _ColumnAmount, _ElevatorPerColAmount, _floor_amount, _MinFloor, _MaxFloor
+    '//ENDFOR
 
-    FOR i= 1 TO column_amount
-        SET columni TO INSTANTIATE Column WITH i, online
-    ENDFOR
+    CALL createColumnList WITH _ColumnAmount, _ElevatorPerColAmount, _MinFloor, _MaxFloor
 
     'set amount and values for each columns'
-Column A: B6 to B1 + RC 
-Column B: 2 to 20 + RC 
-Column C: 21 to 40 + RC
-Column D: 41 to 60 + RC
-
+    if Columnid is 1 THEN 
+        SET Column_MinFloor TO -6
+        ADD Column_MinFloor TO ColumnMinFloorList
+        SET Column_MaxFloor TO -1
+        ADD Column_MaxFloor TO ColumnMaxFloorList
+    else if Columnid is 2 THEN 
+        SET Column_MinFloor TO 2
+        ADD Column_MinFloor TO ColumnMinFloorList
+        SET Column_MaxFloor TO 20
+        ADD Column_MaxFloor TO ColumnMaxFloorList
+    else if Columnid is 3 THEN 
+        SET Column_MinFloor TO 21
+        ADD Column_MinFloor TO ColumnMinFloorList
+        SET Column_MaxFloor TO 40
+        ADD Column_MaxFloor TO ColumnMaxFloorList
+    else if Columnid is 4 THEN 
+        SET Column_MinFloor TO 41
+        ADD Column_MinFloor TO ColumnMinFloorList
+        SET Column_MaxFloor TO 60
+        ADD Column_MaxFloor TO ColumnMaxFloorList
+    endif
 
     FOR EACH Column IN ColumnList
         FOR i= 1 TO elevator_amount
-            SET elevatori TO INSTANTIATE Elevator WITH 7, 7, null, false, true, idle, i AND online
+            SET elevatori TO INSTANTIATE Elevator WITH 1, 1, null, false, true, idle, i AND online
+            ADD elevatori TO ElevatorList
         ENDFOR
 
-        FOR i= 1 TO Columnfloor_amount - 1
+        FOR i= Column_MinFloor TO Column_MaxFloor - 1
             SET UpButtoni TO INSTANTIATE UpButton WITH i, up, i AND notPressed
+            ADD UpButtoni TO UpButtonList
             SET UpButtonFloori TO i
+            ADD UpButtonFloori TO UpButtonFloorList
+        ENDFOR
+        'add main floor UpButton except for column1'
+        if Column is not Column1 THEN
+            SET UpButton1 TO INSTANTIATE UpButton WITH 1, up, 1 AND notPressed
+            ADD UpButton1 TO UpButtonList
+            'useful to sort list?'
+            SORT ascending order UpButtonList
+            'add main floor DownButton floor'
+            SET UpButtonFloor1 TO 1
+            ADD UpButtonFloor1 TO UpButtonFloorList
+            'useful to sort list?'
+            SORT ascending order UpButtonFloorList
+        endif
+
+        FOR i= Column_MinFloor TO Column_MaxFloor
+            SET DownButtoni TO INSTANTIATE DownButton WITH i, down, i AND notPressed
+            ADD DownButtoni TO DownButtonList
+            SET DownButtonFloori TO i
+            ADD DownButtonFloori TO DownButtonFloorList
+            INCREMENT i
+        ENDFOR
+        'add main floor DownButton only for column1'
+        if Column is Column1 THEN
+            SET DownButton1 TO INSTANTIATE DownButton WITH 1, down, 1 AND notPressed
+            ADD DownButton1 TO DownButtonList
+            'useful to sort list?'
+            SORT ascending order DownButtonList
+            'add main floor DownButton floor '
+            SET DownButtonFloor1 TO 1
+            ADD DownButtonFloor1 TO DownButtonFloorList
+            'useful to sort list?'
+            SORT ascending order DownButtonFloorList
+        endif
+
+        FOR EACH Elevator IN ElevatorList
+            FOR i= Column_MinFloor TO Column_MaxFloor
+                SET NewOutsideElevatorCurrentFloorDisplay TO INSTANTIATE outsideElevatorCurrentFloorDisplay WITH ElevatorFloor, i
+                ADD NewOutsideElevatorCurrentFloorDisplay TO outsideElevatorCurrentFloorDisplayList
+                INCREMENT i
+            ENDFOR
+            'add main floor outsideElevatorCurrentFloorDisplay'
+            SET outsideElevatorCurrentFloorDisplay1 TO INSTANTIATE outsideElevatorCurrentFloorDisplay WITH ElevatorFloor, 1
+            ADD outsideElevatorCurrentFloorDisplay1 TO outsideElevatorCurrentFloorDisplayList
+            'useful to sort list?'
+            SORT ascending order outsideElevatorCurrentFloorDisplayList
+
+            SET ElevatorDoor TO INSTANTIATE Door 
+
         ENDFOR
 
-        FOR i= 1 TO Columnfloor_amount - 1
-            SET DownButtoni TO INSTANTIATE DownButton WITH i+1, down, i AND notPressed
-            SET DownButtonFloori TO i+1
-       ENDFOR
+        FOR EACH Elevator IN ElevatorList
+            FOR i= Column_MinFloor TO Column_MaxFloor
+                SET floorButtoni TO INSTANTIATE FloorButton WITH i, i AND notPressed
+                ADD floorButtoni TO FloorButtonList
+                SET floorButtonFloori TO i
+                ADD floorButtonFloori TO FloorButtonFloorList
+                INCREMENT i
+            ENDFOR
+            'add main floor button'
+            SET floorButton1 TO INSTANTIATE FloorButton WITH 1, 1 AND notPressed
+            ADD floorButton1 TO FloorButtonList
+            'useful to sort list?'
+            SORT ascending order FloorButtonList
 
-    ENDFOR
+            'add main floor button floor'
+            SET floorButtonFloor1 TO 1
+            ADD floorButtonFloor1 TO FloorButtonFloorList
+            'useful to sort list?'
+            SORT ascending order FloorButtonFloorList
 
-    FOR EACH Elevator IN ElevatorList
-        FOR i= 1 TO floor_amount
-            SET floorButtoni TO INSTANTIATE FloorButton WITH i, i AND notPressed
-            SET floorButtonFloori TO i
+            SET ElevatorOpenDoorButton TO INSTANTIATE OpenDoorButton WITH open AND notPressed
+            SET ElevatorCloseDoorButton TO INSTANTIATE CloseDoorButton WITH close AND notPressed
+
+            SET NewInsideElevatorCurrentFloorDisplay TO INSTANTIATE insideElevatorCurrentFloorDisplay WITH ElevatorFloor
+            ADD NewInsideElevatorCurrentFloorDisplay TO insideElevatorCurrentFloorDisplayList
+            'useful to sort list?'
+            '//SORT ascending order insideElevatorCurrentFloorDisplayList
+
         ENDFOR
-
-        SET ElevatorOpenDoorButton TO INSTANTIATE OpenDoorButton WITH open AND notPressed
-        SET ElevatorCloseDoorButton TO INSTANTIATE CloseDoorButton WITH close AND notPressed
-
     ENDFOR
-
-ENDSEQUENCE
-
-CALL initialize
+'//ENDSEQUENCE
+'//CALL initialize *******************************************************************************************************************
 '66 floors (including 6 basements) served by four columns, each consisting of 3 elevators.
-FOR EACH Battery IN BatteryList
+'FOR EACH Battery IN BatteryList
 
     FOR EACH Column IN ColumnList
 
         WHILE columnStatus IS online
+
+            FOR EACH outsideElevatorCurrentFloorDisplay IN outsideElevatorCurrentFloorDisplayList
+                CALL displayOutsideElevatorCurrentFloor with ElevatorFloor
+                WHEN ElevatorFloor INCREMENT OR DECREMENT
+                    CALL displayOutsideElevatorCurrentFloor with ElevatorFloor
+            ENDFOR
 
             FOR EACH UpButton IN UpButtonList
                 WHEN user press UpButton
                     SET buttonStatus to pressed
                     SET buttonDirection to up
                     SET floorRequested to UpButtonFloor
-                    CALL columnAddFloorRequestList with buttonDirection AND floorRequested
+                    CALL columnAddFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
                     turn UpButtonLight on
             ENDFOR
             FOR EACH DownButton IN DownButtonList
@@ -702,7 +629,7 @@ FOR EACH Battery IN BatteryList
                     SET buttonStatus to pressed
                     SET buttonDirection to down
                     SET floorRequested to DownButtonFloor
-                    CALL columnAddFloorRequestList with buttonDirection AND floorRequested
+                    CALL columnAddFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
                     turn DownButtonLight on
             ENDFOR
 
@@ -710,7 +637,7 @@ FOR EACH Battery IN BatteryList
             WHILE  elevatorStatusOnlineAmount is greater than 0
 
                 WHEN FloorUpRequestList is NOT empty OR FloorDownRequestList is NOT empty
-                    CALL columnFindElevator with ElevatorFloorList, ElevatorDirectionList, FloorUpRequestList AND FloorDownRequestList
+                    CALL columnFindElevator with ElevatorList, ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
 
                 SET elevatorStatusOnlineAmount TO 0
 
@@ -752,6 +679,12 @@ FOR EACH Battery IN BatteryList
                             SET ElevatorDestination TO first item of ElevatorFloorUpRequestList
                         endif
                 
+                    FOR EACH insideElevatorCurrentFloorDisplay IN insideElevatorCurrentFloorDisplayList
+                        CALL displayInsideElevatorCurrentFloor with ElevatorFloor
+                        WHEN ElevatorFloor INCREMENT OR DECREMENT
+                            CALL displayInsideElevatorCurrentFloor with ElevatorFloor
+                    ENDFOR
+
 
                     FOR EACH FloorButton IN FloorButtonList
                         WHEN user press FloorButton
@@ -768,7 +701,7 @@ FOR EACH Battery IN BatteryList
                                 close doors after a delay of 7 seconds
                             endif
                             SET floorRequested to FloorButtonFloor
-                            CALL elevatorAddFloorRequestList with ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
+                            CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
                     ENDFOR
 
 
@@ -812,10 +745,137 @@ FOR EACH Battery IN BatteryList
             ENDWHILE
 
             'verify or update loop condition
-            if elevatorStatusOnlineAmount = 0
-                columnStatus IS offline
+            if elevatorStatusOnlineAmount is equal to 0
+                SET columnStatus TO offline
             endif
         
         ENDWHILE
     ENDFOR
-ENDFOR
+'ENDFOR
+
+'-------------------------------------------------------Testing Section------------------------------------------------------------'
+Floors deserved:
+Column A: B6 to B1 + RC 
+Column B: 2 to 20 + RC 
+Column C: 21 to 40 + RC
+Column D: 41 to 60 + RC
+
+Scenario 1:
+    Elevator B1 at 20th floor going to the 5th floor
+        ElevatorDirection is down 
+        ElevatorFloor is 20 
+        ElevatorDestination is 5 
+    Elevator B2 at 3rd floor going to the 15th floor
+        ElevatorDirection is up 
+        ElevatorFloor is 3 
+        ElevatorDestination is 15 
+    Elevator B3 at 13th floor going to RC
+        ElevatorDirection is down 
+        ElevatorFloor is 13 
+        ElevatorDestination is 1 
+    Elevator B4 at 15th floor going to the 2nd floor
+        ElevatorDirection is down 
+        ElevatorFloor is 15 
+        ElevatorDestination is 2 
+    Elevator B5 at 6th floor going to RC
+        ElevatorDirection is down 
+        ElevatorFloor is 3 
+        ElevatorDestination is 6 
+
+    Someone at RC wants to go to the 20th floor.
+        CALL columnAddFloorRequestList with FloorUpRequestList, FloorDownRequestList, up AND 1
+
+    Elevator B5 is expected to be sent.
+
+- Scénario 2:
+    Elevator C1 at RC going to the 21st floor
+        ElevatorDirection is up 
+        ElevatorFloor is 1 
+        ElevatorDestination is 21
+
+    Elevator C2 at 23rd floor going to the 28th floor
+        ElevatorDirection is up 
+        ElevatorFloor is 23 
+        ElevatorDestination is 28 
+
+    Elevator C3 at 33rd floor going to RC
+        ElevatorDirection is down 
+        ElevatorFloor is 33 
+        ElevatorDestination is 1 
+
+    Elevator C4 at 40th floor going to the 24th floor
+        ElevatorDirection is down 
+        ElevatorFloor is 40 
+        ElevatorDestination is 24 
+
+    Elevator C5 at 39th floor going to RC
+        ElevatorDirection is down 
+        ElevatorFloor is 39 
+        ElevatorDestination is 1 
+
+    Someone at RC wants to go to the 36th floor.
+        CALL columnAddFloorRequestList with FloorUpRequestList, FloorDownRequestList, up AND 1
+
+    Elevator C1 is expected to be sent.
+
+- Scénario 3:
+    Elevator D1 at 58th going to RC
+        ElevatorDirection is down 
+        ElevatorFloor is 58 
+        ElevatorDestination is 1 
+
+    Elevator D2 at 50th floor going to the 60th floor
+        ElevatorDirection is up 
+        ElevatorFloor is 50 
+        ElevatorDestination is 60 
+
+    Elevator D3 at 46th floor going to the 58th floor
+        ElevatorDirection is up 
+        ElevatorFloor is 46 
+        ElevatorDestination is 58 
+
+    Elevator D4 at RC going to the 54th floor
+        ElevatorDirection is up 
+        ElevatorFloor is 1 
+        ElevatorDestination is 54 
+
+   Elevator D5 at 60th floor going to RC
+        ElevatorDirection is down 
+        ElevatorFloor is 60 
+        ElevatorDestination is 1 
+
+    Someone at 54e floor wants to go to RC.
+        CALL columnAddFloorRequestList with FloorUpRequestList, FloorDownRequestList, down AND 54
+
+    Elevator D1 is expected to be sent.
+
+- Scénario 4:
+    Elevator A1 “Idle” at SS4
+        ElevatorDirection is idle 
+        ElevatorFloor is -4
+
+    Elevator A2 “Idle” at RC
+        ElevatorDirection is idle 
+        ElevatorFloor is 1 
+
+    Elevator A3 at SS3 going to SS5
+        ElevatorDirection is down 
+        ElevatorFloor is -3 
+        ElevatorDestination is -5
+
+    Elevator A4 at SS6 going to RC
+        ElevatorDirection is up 
+        ElevatorFloor is -6 
+        ElevatorDestination is 1
+
+    Elevator A5 at SS1 going to SS6
+        ElevatorDirection is down 
+        ElevatorFloor is -1 
+        ElevatorDestination is -6 
+
+    Someone at SS3 wants to go to RC.
+        CALL columnAddFloorRequestList with FloorUpRequestList, FloorDownRequestList, up AND -3
+
+    Elevator A4 is expected to be sent.
+
+'-------------------------------------------------------Testing Section------------------------------------------------------------'
