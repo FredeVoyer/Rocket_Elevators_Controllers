@@ -552,7 +552,7 @@ FOR EACH Column IN ColumnList
                     close doors after a delay of 7 seconds
                     allow users to use OpenDoorButton AND CloseDoorButton before or when door is closing only
                     WHEN door is closed
-                        move elevator to the next floor if list is not empty
+                        move elevator to the next floor if list is not empty (ElevatorDestination not null)
                         if ElevatorDirection is up THEN 
                             INCREMENT ElevatorFloor
                         else if ElevatorDirection is down THEN 
