@@ -1,14 +1,14 @@
 //JS code for residential building elevators controller (controller algorithm)
 
 // Initiate the scenario in the documentation
-var column_amount = 1;
+/*var column_amount = 1;
 var elevator_amount = 2;
-var floor_amount = 10;
+var floor_amount = 10;*/
 
 // definition of the class Column
 var Column = function(id, status) {   
-    this.ID: id;
-    this.Status: status;
+    this.ID= id;
+    this.Status= status;
     this.ElevatorList = [];
     this.UpButtonList= [];
     this.DownButtonList= [];
@@ -18,6 +18,8 @@ var Column = function(id, status) {
    
     this.FloorUpRequestList= [];
     this.FloorDownRequestList= [];
+    // send back a reference to this newly created column object to the loop
+    return this;
 };
      
 Column.prototype.AddFloorRequestList = function(FloorUpRequestList, FloorDownRequestList, buttonDirection, floorRequested) {
@@ -56,7 +58,7 @@ Column.prototype.AddFloorRequestList = function(FloorUpRequestList, FloorDownReq
             FloorDownRequestList.sort(function(a,b){return b-a});
         } 
     }
- }
+}
 
 Column.prototype.RemoveFloorRequestList = function(FloorUpRequestList, FloorDownRequestList, buttonDirection, floorRequested) {
     if (buttonDirection === "up") {
@@ -112,7 +114,7 @@ Column.prototype.FindElevator  = function(ElevatorList, ElevatorDestination, Ele
     var distance=[];
     var i=0;
     FOR (potentialElevator IN potentialElevatorsList) {
-        distance[i] = Math.abs(ElevatorFloor - ElevatorDestination);
+        distance[i] = Math.abs(ElevatorFloor - maxFloorUpRequested);
         i++;
     }
             // Identify the smallest distance
@@ -121,7 +123,7 @@ Column.prototype.FindElevator  = function(ElevatorList, ElevatorDestination, Ele
     var minDistance = distance[0];
             // Identify closest elevator moving up
     FOR (potentialElevator IN potentialElevatorsList) {
-        if (Math.abs(ElevatorFloor - ElevatorDestination) === minDistance) {
+        if (Math.abs(ElevatorFloor - maxFloorUpRequested) === minDistance) {
             ElevatorUpSelected = potentialElevator;
             break; // select only one elevator
         }
@@ -140,211 +142,104 @@ Column.prototype.FindElevator  = function(ElevatorList, ElevatorDestination, Ele
         }  
     }*/
 
-        
-
         // select lastly elevator not moving (idle and with no destination) and the closest to clear (empty) FloorUpRequestList
-    if ElevatorUpSelected = null THEN
-        FOR EACH Elevator IN ElevatorList
-            COMPUTE distance between the Elevator and maxFloorUpRequested
+    if (ElevatorUpSelected === null) {
+        // Identify potential elevators idle to moving up and create list
+        potentialElevatorsList=[]; 
+        FOR (Elevator IN ElevatorList) {
+            if (ElevatorDirection === "idle" && ElevatorDestination === null) {
+                potentialElevators.push(Elevator);
+            }
+        }
+                // COMPUTE distance between the Elevator and maxFloorUpRequested to select the closest
+        //potentialElevator;
+        distance=[];
+        i=0;
+        FOR (potentialElevator IN potentialElevatorsList) {
+            distance[i] = Math.abs(ElevatorFloor - minFloorUpRequested);
+            i++;
+        }
+                // Identify the smallest distance
+        //SORT ascending order distance
+        distance.sort(function(a,b){return a-b});
+        minDistance = distance[0];
+                // Identify closest elevator idle
+        FOR (potentialElevator IN potentialElevatorsList) {
+            if (Math.abs(ElevatorFloor - minFloorUpRequested) === minDistance) {
+                ElevatorUpSelected = potentialElevator;
+                buttonDirection = "up";
+                break; // select only one elevator
+            }
+        }
+    }
 
-            if ElevatorDirection is idle AND ElevatorDestination is null AND Elevator has lowest distance from maxFloorUpRequested THEN
-                SET buttonDirection TO up
-                SET ElevatorUpSelected TO Elevator
-                FOR ElevatorUpSelected IN ElevatorList
-                    '//SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                    '//SET ElevatorFloorDownRequestList TO FloorDownRequestList
-                    FOR EACH FloorUpRequest IN FloorUpRequestList
-                            CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
-                            CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorUpRequest
-                    ENDFOR
-                ENDFOR
-            EXIT FOR '// BREAK to avoid picking more than one elevator at the same distance from floor requested
-            endif
-        ENDFOR
-    endif
+    // case FloorDownRequestList
+    var ElevatorDownpSelected = null;
+    // minFloorUpRequested to first item of FloorUpRequestList
+    var minFloorDownRequested = FloorDownRequestList[0];
+    // maxFloorUpRequested to last item of FloorUpRequestList
+    var maxFloorDownRequested = FloorDownRequestList[FloorDownRequestList.length - 1];
+    // select first elevator moving, refine with closest one or one that can do all the list
+    //var Elevator;
+        // Identify potential elevators moving up and create list
+    potentialElevatorsList=[]; 
+    FOR (Elevator IN ElevatorList) {
+        if (ElevatorDirection === "down" && ElevatorFloor >= minFloorDownRequested) {
+            potentialElevators.push(Elevator);
+        }
+    }
+        // COMPUTE distance between the Elevator and maxFloorUpRequested to select the closest
+    potentialElevator=[];
+    distance=[];
+    i=0;
+    FOR (potentialElevator IN potentialElevatorsList) {
+        distance[i] = Math.abs(ElevatorFloor - minFloorDownRequested);
+        i++;
+    }
+        // Identify the smallest distance
+    //SORT ascending order distance
+    distance.sort(function(a,b){return a-b});
+    minDistance = distance[0];
+        // Identify closest elevator moving up
+    FOR (potentialElevator IN potentialElevatorsList) {
+        if (Math.abs(ElevatorFloor - minFloorDownRequested) === minDistance) {
+            ElevatorDownSelected = potentialElevator;
+            break; // select only one elevator
+        }
+    }
+  
+    // select lastly elevator not moving (idle and with no destination) and the closest to clear (empty) FloorDownRequestList
+    if (ElevatorDownSelected === null) {
+        // Identify potential elevators idle to moving up and create list
+        potentialElevatorsList=[]; 
+        FOR (Elevator IN ElevatorList) {
+            if (ElevatorDirection === "idle" && ElevatorDestination === null) {
+                potentialElevators.push(Elevator);
+            }
+        }
+                // COMPUTE distance between the Elevator and maxFloorUpRequested to select the closest
+        //potentialElevator;
+        distance=[];
+        i=0;
+        FOR (potentialElevator IN potentialElevatorsList) {
+            distance[i] = Math.abs(ElevatorFloor - minFloorDownRequested);
+            i++;
+        }
+                // Identify the smallest distance
+        //SORT ascending order distance
+        distance.sort(function(a,b){return a-b});
+        minDistance = distance[0];
+                // Identify closest elevator idle
+        FOR (potentialElevator IN potentialElevatorsList) {
+            if (Math.abs(ElevatorFloor - minFloorDownRequested) === minDistance) {
+                ElevatorDownSelected = potentialElevator;
+                buttonDirection = "down";
+                break; // select only one elevator
+            }
+        }
+    }
 
-    '// case FloorDownRequestList
-    SET ElevatorDownSelected to null
-    SET minFloorDownRequested to first item of FloorDownRequestList
-    SET maxFloorDownRequested to last item of FloorDownRequestList
-        '// select first elevator moving, refine with closest one  or one that can do all the list
-    FOR EACH Elevator IN ElevatorList
-        COMPUTE distance between the Elevator and minFloorDownRequested
-
-        if ElevatorDirection is down AND ElevatorFloor >= minFloorDownRequested AND Elevator has lowest distance from minFloorDownRequested THEN
-            SET ElevatorDownSelected TO Elevator
-            FOR ElevatorDownSelected IN ElevatorList
-                '//SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                '//SET ElevatorFloorDownRequestList TO FloorDownRequestList
-                FOR EACH FloorDownRequest IN FloorDownRequestList
-                    if FloorDownRequest is lower or equal to ElevatorFloor
-                        CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
-                        CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
-                    endif
-                ENDFOR
-            ENDFOR
-            EXIT FOR '// BREAK to avoid picking more than one elevator at the same distance from floor requested
-        endif
-    ENDFOR
-        '// select lastly elevator not moving (idle and with no destination) to clear (empty) FloorDownRequestList
-    if ElevatorDownSelected = null THEN
-        FOR EACH Elevator IN ElevatorList
-            'case not moving'
-            COMPUTE distance between the Elevator and minFloorDownRequested
-            
-            if ElevatorDirection is idle AND ElevatorDestination is null AND Elevator has lowest distance from minFloorDownRequested THEN
-                SET buttonDirection TO down
-                SET ElevatorDownSelected TO Elevator
-                FOR ElevatorDownSelected IN ElevatorList
-                    '//SET ElevatorFloorUpRequestList TO FloorUpRequestList
-                    '//SET ElevatorFloorDownRequestList TO FloorDownRequestList
-                    FOR EACH FloorDownRequest IN FloorDownRequestList
-                        if FloorDownRequest is lower or equal to ElevatorFloor
-                            CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
-                            CALL columnRemoveFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
-                        endif
-                    ENDFOR
-                ENDFOR
-                EXIT FOR '// BREAK to avoid picking more than one elevator at the same distance from floor requested
-            endif
-        ENDFOR
-    endif
-
-}
-    'remove done below initiate'
-    SEQUENCE createElevatorList USING elevator_amount
-        SET elevId to 1
-        FOR elevator= 0 TO elevator_amount - 1
-            SET ElevatorList[elevator] TO "Elevator elevId"
-            INCREMENT elevId
-        ENDFOR
-    ENDSEQUENCE
-    'remove done below initiate'
-    SEQUENCE createUpButtonList USING floor_amount
-        SET buttonId to 1
-        FOR button= 0 TO floor_amount - 2
-            SET UpButtonList[button] TO "UpButton buttonId"
-            INCREMENT buttonId
-        ENDFOR
-    ENDSEQUENCE
-    'remove done below initiate'
-    SEQUENCE createDownButtonList USING floor_amount
-        SET buttonId to 1
-        FOR button= 0 TO floor_amount - 2
-            SET DownButtonList[button] TO "DownButton buttonId"
-            INCREMENT buttonId
-        ENDFOR
-    ENDSEQUENCE
-    'remove done below initiate'
-    SEQUENCE createUpButtonFloorList USING floor_amount
-        SET floorId to 1
-        FOR floor= 0 TO floor_amount - 2
-            SET UpButtonFloorList[floor] TO floorId
-            INCREMENT floorId
-        ENDFOR
-    ENDSEQUENCE
-    'remove done below initiate'
-    SEQUENCE createDownButtonFloorList USING floor_amount
-        SET floorId to 2
-        FOR floor= 0 TO floor_amount - 2
-            SET DownButtonFloorList[floor] TO floorId
-            INCREMENT floorId
-        ENDFOR
-    ENDSEQUENCE
-
-ENDDEFINE
-
-'// definition of the class Elevator
-DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, direction, id AND status
-    ID: id,
-    Status: status, '// online, offline
-    Direction : direction, '// null (idle not moving if destination is null else moving), up, down (moving for both)
-    DoorOpen: doorOpen, '// bool true false
-    DoorClosed: doorClosed, '// bool true false
-    Floor: floor, '// floor domain (1,...,10)
-    Destination: destination, '// floor domain (1,...,10) and null if Direction to null (idle, not moving; else moving)
-    Origin: origin, '// floor domain (1,...,10)
-    MaxWeight: 2500, '// pounds'
-    FloorButtonList: SET to empty List,
-    FloorButtonFloorList: SET to empty List,
-    ButtonFloorRequestedList: SET to empty List,
-    FloorRequestList: SET to empty List,
-    FloorUpRequestList: SET to empty List,
-    FloorDownRequestList: SET to empty List
-
-     
-    SEQUENCE elevatorAddFloorRequestList USING ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
-        '// case NOT MOVING:ElevatorFloorUpRequestList, ElevatorFloorDownRequestList are empty before the call
-        if ElevatorDirection is idle AND ElevatorDestination is null THEN
-            if buttonDirection is up THEN
-                '// verify if floor requested already in the ElevatorFloorUpRequestList before adding to the list
-                SET addToList TO true;
-                FOR EACH ElevatorFloorUpRequest IN ElevatorFloorUpRequestList
-                    if floorRequested is equal to ElevatorFloorUpRequest THEN
-                        SET addToList TO false;
-                        EXIT FOR '// BREAK
-                    endif
-
-                ENDFOR
-                if addToList is true or floorRequested is not in ElevatorFloorUpRequestList THEN
-                    ADD floorRequested TO ElevatorFloorUpRequestList
-                    SORT ascending order ElevatorFloorUpRequestList
-                endif
-            else if buttonDirection is down THEN
-                '// verify if floor requested already in the ElevatorFloorDownRequestList before adding to the list
-                SET addToList TOtrue;
-                FOR EACH ElevatorFloorDownRequest IN ElevatorFloorDownRequestList
-                    if floorRequested is equal to ElevatorFloorDownRequest THEN
-                        SET addToList TO false;
-                        EXIT FOR '// BREAK
-                    endif
-
-                ENDFOR
-                if addToList is equal to true or floorRequested is not in ElevatorFloorDownRequestList THEN
-                    ADD floorRequested TO ElevatorFloorDownRequestList
-                    SORT descending order ElevatorFloorDownRequestList
-                endif
-
-            endif
-        'case moving '
-        else
-            if floorRequested is higher than ElevatorFloor THEN
-                '// verify if floor requested already in the ElevatorFloorUpRequestList before adding to the list
-                SET addToList TO true;
-                FOR EACH ElevatorFloorUpRequest IN ElevatorFloorUpRequestList
-                    if floorRequested is equal to ElevatorFloorUpRequest THEN
-                        SET addToList TO false;
-                        EXIT FOR '// BREAK
-                    endif
-
-                ENDFOR
-                if addToList is equal to true or floorRequested is not in ElevatorFloorUpRequestList THEN
-                    ADD floorRequested TO ElevatorFloorUpRequestList
-                    SORT ascending order ElevatorFloorUpRequestList
-                endif
-            endif
-            else if floorRequested is lower than ElevatorFloor THEN
-                '// verify if floor requested already in the ElevatorFloorDownRequestList before adding to the list
-                SET addToList TO true;
-                FOR EACH ElevatorFloorDownRequest IN ElevatorFloorDownRequestList
-                    if floorRequested is equal to ElevatorFloorDownRequest THEN
-                        SET addToList=false;
-                        EXIT FOR '// BREAK
-                    endif
-
-                ENDFOR
-                if addToList is equal to true or floorRequested is not in ElevatorFloorDownRequestList THEN
-                    ADD floorRequested TO ElevatorFloorDownRequestList
-                    SORT descending order ElevatorFloorDownRequestList
-                endif
-            endif
-            '// not sure necessary case to treat (do something) or treated below
-            else if floorRequested is equal to ElevatorFloor THEN
-            endif
-        endif
-
-
-        /******************* */
+    // Return selected elevator (if there is one)
     if (ElevatorUpSelected !== null) {
         ElevatorSelected = ElevatorUpSelected;
     }
@@ -352,26 +247,129 @@ DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, directio
         ElevatorSelected = ElevatorDownSelected;
     }
     return ElevatorSelected;
+}
 
-    ENDSEQUENCE
-    
-    SEQUENCE elevatorRemoveFloorRequestList USING  ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
-        if buttonDirection is up THEN
-            FOR EACH ElevatorFloorUpRequest IN ElevatorFloorUpRequestList
-                if floorRequested is equal to ElevatorFloorUpRequest THEN
-                    REMOVE ElevatorFloorUpRequest FROM ElevatorFloorUpRequestList
-                endif
-            ENDFOR
-        endif
-        else if buttonDirection is down THEN
+// definition of the class Elevator
+var Elevator = function(origin, floor, destination, doorOpen, doorClosed, direction, id, status) {
+    this.ID = id;
+    this.Status= status; // online, offline
+    this.Direction = direction; // null (idle not moving if destination is null else moving), up, down (moving for both)
+    this.DoorOpen = doorOpen; // bool true false
+    this.DoorClosed = doorClosed; // bool true false
+    this.Floor= floor; // floor domain (1,...,10)
+    this.Destination = destination; // floor domain (1,...,10) and null if Direction to null (idle, not moving; else moving)
+    this.Origin = origin; // floor domain (1,...,10)
+    this.MaxWeight = 2500; // pounds'
+    this.FloorButtonList= [];
+    this.FloorButtonFloorList= [];
+    this.ButtonFloorRequestedList= [];
+    this.FloorRequestList= [];
+    this.FloorUpRequestList= [];
+    this.FloorDownRequestList= [];
+    // send back a reference to this newly created column object to the loop
+    return this;
+};
+
+Elevator.prototype.AddFloorRequestList = function(ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection, floorRequested) {
+    var addToList = true;
+    // case NOT MOVING:ElevatorFloorUpRequestList, ElevatorFloorDownRequestList are empty before the call
+    if (ElevatorDirection === "idle" && ElevatorDestination === null) THEN
+        if (buttonDirection === "up") {
+            // verify if floor requested already in the ElevatorFloorUpRequestList before adding to the list
+            var ElevatorFloorUpRequest;
+            FOR (ElevatorFloorUpRequest IN ElevatorFloorUpRequestList) {
+                if floorRequested === ElevatorFloorUpRequest {
+                    addToList = false;
+                    BREAK;                   
+                }
+            }
+            if (addToList === true) { //or floorRequested is not in ElevatorFloorUpRequestList THEN
+                //ADD floorRequested TO ElevatorFloorUpRequestList
+                ElevatorFloorUpRequestList.push(floorRequested);
+                //SORT ascending order ElevatorFloorUpRequestList
+                ElevatorFloorUpRequestList.sort(function(a,b){return a-b});
+            } 
+        }
+        else if buttonDirection === "down" {
+            // verify if floor requested already in the ElevatorFloorDownRequestList before adding to the list
+            var ElevatorFloorDownRequest;
+            FOR (ElevatorFloorDownRequest IN ElevatorFloorDownRequestList) {
+                if floorRequested === ElevatorFloorDownRequest {
+                    addToList = false;
+                    BREAK;                   
+                }
+            }
+            if (addToList === true) { //or floorRequested is not in ElevatorFloorDownRequestList 
+                //ADD floorRequested TO ElevatorFloorDownRequestList
+                ElevatorFloorDownRequestList.push(floorRequested);
+                //SORT descending order ElevatorFloorDownRequestList
+                ElevatorFloorDownRequestList.sort(function(a,b){return b-a});
+            } 
+        }
+    //case moving '
+    else {
+        if (floorRequested > ElevatorFloor) {
+            // verify if floor requested already in the ElevatorFloorUpRequestList before adding to the list
+            var ElevatorFloorUpRequest;
+            FOR (ElevatorFloorUpRequest IN ElevatorFloorUpRequestList) {
+                if (floorRequested === ElevatorFloorUpRequest) {
+                    addToList = false;
+                    BREAK;
+                } 
+            }
+            if (addToList === true) {
+                //or floorRequested is not in ElevatorFloorUpRequestList 
+                //ADD floorRequested TO ElevatorFloorUpRequestList
+                ElevatorFloorUpRequestList.push(floorRequested);
+                //SORT ascending order ElevatorFloorUpRequestList
+                ElevatorFloorUpRequestList.sort(function(a,b){return a-b});
+
+            } 
+        }
+        else if (floorRequested < ElevatorFloor) {
+            // verify if floor requested already in the ElevatorFloorDownRequestList before adding to the list
             FOR EACH ElevatorFloorDownRequest IN ElevatorFloorDownRequestList
-                if floorRequested is equal to ElevatorFloorDownRequest THEN
-                    REMOVE ElevatorFloorDownRequest FROM ElevatorFloorDownRequestList
-                endif
-            ENDFOR
-        endif
-    ENDSEQUENCE
-    'verify done lower'
+            FOR (ElevatorFloorDownRequest IN ElevatorFloorDownRequestList) {
+                if (floorRequested === ElevatorFloorDownRequest) {
+                    addToList = false;
+                    BREAK;
+                } 
+            }
+            if (addToList === true) { //or floorRequested is not in ElevatorFloorDownRequestList 
+                //ADD floorRequested TO ElevatorFloorDownRequestList
+                ElevatorFloorDownRequestList.push(floorRequested);
+                //SORT descending order ElevatorFloorDownRequestList
+                ElevatorFloorDownRequestList.sort(function(a,b){return b-a});
+            }
+        } 
+        // not sure necessary case to treat (do something) or treated below
+        //else if floorRequested is equal to ElevatorFloor THEN
+        //endif
+    }
+}
+
+Elevator.prototype.RemoveFloorRequestList = function(ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection, floorRequested) {
+    if (buttonDirection === "up") {
+        var ElevatorFloorUpRequest;
+        FOR (ElevatorFloorUpRequest IN ElevatorFloorUpRequestList) {
+            if (floorRequested === ElevatorFloorUpRequest) {
+                //REMOVE ElevatorFloorUpRequest FROM ElevatorFloorUpRequestList
+                ElevatorFloorUpRequestList.shift();
+            }
+        }
+    }
+    else if (buttonDirection === "down") {
+        var ElevatorFloorDownRequest;
+        FOR (ElevatorFloorDownRequest IN ElevatorFloorDownRequestList) {
+            if (floorRequested === ElevatorFloorDownRequest) {
+                //REMOVE ElevatorFloorDownRequest FROM ElevatorFloorDownRequestList
+                ElevatorFloorDownRequestList.shift();
+            }
+        }
+    }
+}
+
+/*   'verify done lower'
     SEQUENCE updateElevatorDirection USING ElevatorFloor ElevatorDestination
         IF ElevatorFloor is higher than ElevatorDestination THEN
             SET ElevatorDirection TO down
@@ -402,41 +400,47 @@ DEFINE Elevator USING origin, floor, destination, doorOpen, doorClosed, directio
     SEQUENCE updateOrigin USING 
     ENDSEQUENCE
 
-ENDDEFINE
+ENDDEFINE */
 
-'// definition of the class Button (related to floor and column, light on if pressed, light off if command resolved or default)
-DEFINE Button USING floor, direction, id AND status
-    ID: id,
-    Status: status, '// pressed, notPressed
-    Floor: floor, 
-    Light: off,
-    Direction: direction '// up, down
+// definition of the class Button (related to floor and column, light on if pressed, light off if command resolved or default)
+var Button = function(floor, direction, id, status) {
+    this.ID = id;
+    this.Status = status; // pressed, notPressed
+    this.Floor = floor; 
+    this.Light = "off";
+    this.Direction = direction; // up, down
+};
 
-ENDDEFINE
-DEFINE UpButton USING floor, direction, id AND status
-    ID: id,
-    Status: status, '// pressed, notPressed
-    Floor: floor, 
-    Light: off,
-    Direction: up
+var UpButton = function(floor, direction, id, status) {
+    this.ID = id;
+    this.Status = status; // pressed, notPressed
+    this.Floor = floor; 
+    this.Light = "off";
+    this.Direction = "up"; // up, down
+    // send back a reference to this newly created column object to the loop
+    return this;
+};
 
-ENDDEFINE
-DEFINE DownButton USING floor, direction, id AND status
-    ID: id,
-    Status: status, '// pressed, notPressed
-    Floor: floor, 
-    Light: off,
-    Direction: down
+var DownButton = function(floor, direction, id, status) {
+    this.ID = id;
+    this.Status = status; // pressed, notPressed
+    this.Floor = floor; 
+    this.Light = "off";
+    this.Direction = "down"; // up, down
+    // send back a reference to this newly created column object to the loop
+    return this;
+};
 
-ENDDEFINE
-DEFINE FloorButton USING floorRequested, id AND status
-    ID: id,
-    Status: status, '// pressed, notPressed
-    FloorRequested: floorRequested, 
-    Light: off,
-    Direction: direction '// up, down
-
-ENDDEFINE
+var FloorButton = function(floorRequested, id, status) {
+    this.ID= id;
+    this.Status= status; // pressed, notPressed
+    this.FloorRequested= floorRequested;
+    this.Light = "off";
+    this.Direction = direction; // up, down
+    // send back a reference to this newly created column object to the loop
+    return this;
+};
+/*
 DEFINE OpenDoorButton USING id AND status
     ID: id,
     Status: status, '// pressed, notPressed
@@ -444,198 +448,301 @@ ENDDEFINE
 DEFINE CloseDoorButton USING id AND status
     ID: id,
     Status: status, '//' pressed, notPressed
-ENDDEFINE
-DEFINE Door 
-    ID: id,
-    Status: closed, '//' open, closed
+ENDDEFINE 
+*/
+var Door = function(floorRequested, id, status) {
+    this.ID= id;
+    this.Status= "closed"; //' open, closed
+    // send back a reference to this newly created column object to the loop
+    return this;
+};
 
-    SEQUENCE openDoor
-        OPEN the door
-        SET Status TO open
-    ENDSEQUENCE
+ var Door.prototype.openDoor = function() {
+    //OPEN the door
+    this.Status = "open";
+}
+var Door.prototype.closeDoor = function() {
+    //Close the door
+    this.Status = "closed";
+}
+   
 
-    SEQUENCE closeDoor
-        CLOSE the door
-        SET Status TO closed
-    ENDSEQUENCE
+//SEQUENCE initialize *******************************************************************************************************************
 
-ENDDEFINE
+// Initiate the scenario in the documentation
+var column_amount = 1;
+var elevator_amount = 2;
+var floor_amount = 10;
 
+// Create column objects
+/*FOR (i= 1 TO column_amount);
+    SET columni TO INSTANTIATE Column WITH i, online
+ENDFOR */
 
-'//SEQUENCE initialize *******************************************************************************************************************
-    SET column_amount to 1
-    SET elevator_amount to 2
-    SET floor_amount to 10
+// create an array of column object references
+var columnObjectReferences = [];
+for (var i=1; i<=column_amount; i++){
+    // building 1 (column_amount) column objects here, with ids of: column-1, yt-column-2, etc.
+    // build a selector to reference them via id, not by class with a dot as you have in your question
+    var sel = String("#column-" + i);
+    // create the object and store a reference to the column object so you can do something with it later
+    var newColumn = new ColumnObject($(sel), i);
+    // build list of references
+    columnObjectReferences.push(newColumn);
+}
 
-    FOR i= 1 TO column_amount
-        SET columni TO INSTANTIATE Column WITH i, online
-    ENDFOR
+var Column;
+FOR (Column IN columnObjectReferences) {
+    // Create elevator objects
+    /*FOR i= 1 TO elevator_amount
+        SET elevatori TO INSTANTIATE Elevator WITH 1, 1, null, false, true, idle, i AND online
+    ENDFOR*/
+    // create an array of elevator object references
+    var elevatorObjectReferences = [];
+    for (i=1; i<=elevator_amount; i++){
+        // building elevator_amount (2) elevator objects here, with ids of: elevator-1, elevator-2, etc.
+        // build a selector to reference them via id, not by class with a dot as you have in your question
+        sel = String("#elevator-" + i);
+        // create the object and store a reference to the elevator object so you can do something with it later
+        var newElevator = new ElevatorObject($(sel), i);
+        // build list of references
+        elevatorObjectReferences.push(newElevator);
+    }
+    // Create UpButton objects
+    /*FOR i= 1 TO floor_amount - 1
+        SET UpButtoni TO INSTANTIATE UpButton WITH i, up, i AND notPressed
+        //SET UpButtonFloori TO i
+    ENDFOR*/
+    // create an array of UpButton object references
+    var upButtonObjectReferences = [];
+    for (i=1; i<=floor_amount - 1; i++){
+        // building floor_amount - 1 (9) UpButton objects here, with ids of: upButton-1, upButton-2, etc.
+        // build a selector to reference them via id, not by class with a dot as you have in your question
+        sel = String("#upButton-" + i);
+        // create the object and store a reference to the upButton object so you can do something with it later
+        var newUpButton = new UpButtonObject($(sel), i);
+        // build list of references
+        upButtonObjectReferences.push(newUpButton);
+    }
 
-    FOR EACH Column IN ColumnList
-        FOR i= 1 TO elevator_amount
-            SET elevatori TO INSTANTIATE Elevator WITH 1, 1, null, false, true, idle, i AND online
-        ENDFOR
+     // Create DownButton objects
+    /*FOR i= 1 TO floor_amount - 1
+        SET DownButtoni TO INSTANTIATE DownButton WITH i+1, down, i AND notPressed
+        //SET DownButtonFloori TO i+1
+    ENDFOR*/
+    // create an array of DownButton object references
+    var downButtonObjectReferences = [];
+    for (i=1; i<=floor_amount - 1; i++){
+        // building floor_amount - 1 (9) DownButton objects here, with ids of: downButton-1, downButton-2, etc.
+        // build a selector to reference them via id, not by class with a dot as you have in your question
+        sel = String("#downButton-" + i);
+        // create the object and store a reference to the DownButton object so you can do something with it later
+        var newDownButton = new DownButtonObject($(sel), i);
+        // build list of references
+        downButtonObjectReferences.push(newDownButton);
+    }
 
-        FOR i= 1 TO floor_amount - 1
-            SET UpButtoni TO INSTANTIATE UpButton WITH i, up, i AND notPressed
-            SET UpButtonFloori TO i
-        ENDFOR
+    var Elevator;
+    FOR (Elevator IN ElevatorList) {
+        // create an array of FloorButton object references
+        var floorButtonObjectReferences = [];
+        FOR (i= 1; i<=floor_amount; i++) {
+            // Create FloorButton objects
+            //SET floorButtoni TO INSTANTIATE FloorButton WITH i, i AND notPressed
+            //SET floorButtonFloori TO i
+                // building floor_amount (10) FloorButton objects here, with ids of: floorButton-1, floorButton-2, etc.
+                // build a selector to reference them via id, not by class with a dot as you have in your question
+                sel = String("#floorButton-" + i);
+                // create the object and store a reference to the FloorButton object so you can do something with it later
+                var newFloorButton = new FloorButtonObject($(sel), i);
+                // build list of references
+                floorButtonObjectReferences.push(newFloorButton);
+            }
+        }
+        //SET ElevatorOpenDoorButton TO INSTANTIATE OpenDoorButton WITH open AND notPressed
+        //SET ElevatorCloseDoorButton TO INSTANTIATE CloseDoorButton WITH close AND notPressed
+        //SET ElevatorDoor TO INSTANTIATE Door 
+        var ElevatorDoor = new Door();
+   }
+}
 
-        FOR i= 1 TO floor_amount - 1
-            SET DownButtoni TO INSTANTIATE DownButton WITH i+1, down, i AND notPressed
-            SET DownButtonFloori TO i+1
-       ENDFOR
+//ENDSEQUENCE
+//CALL initialize *******************************************************************************************************************
 
-    ENDFOR
-
-    FOR EACH Elevator IN ElevatorList
-        FOR i= 1 TO floor_amount
-            SET floorButtoni TO INSTANTIATE FloorButton WITH i, i AND notPressed
-            SET floorButtonFloori TO i
-        ENDFOR
-
-        SET ElevatorOpenDoorButton TO INSTANTIATE OpenDoorButton WITH open AND notPressed
-        SET ElevatorCloseDoorButton TO INSTANTIATE CloseDoorButton WITH close AND notPressed
-        SET ElevatorDoor TO INSTANTIATE Door 
-
-    ENDFOR
-
-'//ENDSEQUENCE
-'//CALL initialize *******************************************************************************************************************
-
-FOR EACH Column IN ColumnList
-
-    WHILE columnStatus IS online
-
-        FOR EACH UpButton IN UpButtonList
-            WHEN user press UpButton
+FOR (Column IN ColumnList) {
+    WHILE (columnStatus === "online") {
+        var UpButton;
+        FOR (UpButton IN UpButtonList) {
+            /*WHEN user press UpButton
                 SET buttonStatus to pressed
                 SET buttonDirection to up
                 SET floorRequested to UpButtonFloor
                 CALL columnAddFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
-                turn UpButtonLight on
-        ENDFOR
-        FOR EACH DownButton IN DownButtonList
-            WHEN user press DownButton
+                */ columnAddFloorRequestList(FloorUpRequestList, FloorDownRequestList, buttonDirection, floorRequested);
+                //turn UpButtonLight on
+        }
+        var DownButton;
+        FOR (DownButton IN DownButtonList) {
+            /*WHEN user press DownButton
                 SET buttonStatus to pressed
                 SET buttonDirection to down
                 SET floorRequested to DownButtonFloor
                 CALL columnAddFloorRequestList with FloorUpRequestList, FloorDownRequestList, buttonDirection AND floorRequested
-                turn DownButtonLight on
-        ENDFOR
+                */ columnAddFloorRequestList(FloorUpRequestList, FloorDownRequestList, buttonDirection, floorRequested);
+               //turn DownButtonLight on
+        }
 
+        WHILE (elevatorStatusOnlineAmount > 0) {
+            if (FloorUpRequestList !== [] || FloorDownRequestList !== []) {
+                //CALL columnFindElevator with ElevatorList, ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
+                columnFindElevator(ElevatorList, ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection, FloorDownRequest);
+                // add floor reuqest(s) to selected elevator and remove it from columnList
+                if (ElevatorDirection === "up") {
+                    var FloorUpRequest;
+                    FOR (Elevator IN ElevatorList) {
+                        if (Elevator === ElevatorSelected) {
+                            FOR (FloorUpRequest IN FloorUpRequestList) {
+                                if (FloorUpRequest >= ElevatorFloor) {
+                                    elevatorAddFloorRequestList(ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection, floorRequested);
+                                    columnRemoveFloorRequestList(FloorUpRequestList, FloorDownRequestList, buttonDirection, FloorUpRequest);
+                                    //BREAK;  // EXIT FOR to avoid picking more than one elevator at the same distance from floor requested
+                                }
+                            }
+                        }  
+                    }
+                }
+                else if (ElevatorDirection === "down") {
+                    var FloorDownRequest;
+                    FOR (Elevator IN ElevatorList) {
+                        if (Elevator === ElevatorSelected) {
+                            FOR (FloorDownRequest IN FloorDownRequestList) {
+                                if (FloorDownRequest <= ElevatorFloor) {
+                                    elevatorAddFloorRequestList(ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection, floorRequested);
+                                    columnRemoveFloorRequestList(FloorUpRequestList, FloorDownRequestList, buttonDirection, FloorUpRequest);
+                                   // BREAK;  // EXIT FOR to avoid picking more than one elevator at the same distance from floor requested
+                                }
+                            }
+                        }  
+                    }
+                }
+            } 
 
-        WHILE  elevatorStatusOnlineAmount is greater than 0
+            var elevatorStatusOnlineAmount = 0;
 
-            WHEN FloorUpRequestList is NOT empty OR FloorDownRequestList is NOT empty
-                CALL columnFindElevator with ElevatorList, ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, FloorUpRequestList, FloorDownRequestList, buttonDirection AND FloorDownRequest
-
-            SET elevatorStatusOnlineAmount TO 0
-
-            FOR EACH Elevator IN ElevatorList
-
-                if elevatorStatus is Online THEN
-                    INCREMENT elevatorStatusOnlineAmount
-                endif
-                WHEN Elevator is outOfOrder or not safe THEN
+            FOR (Elevator IN ElevatorList) {
+                if (elevatorStatus === "Online") {
+                    elevatorStatusOnlineAmount++;
+                } 
+                /*WHEN Elevator is outOfOrder or not safe THEN
                     SET elevatorStatus TO Offline
-                    'remove Elevator from ElevatorList'
+                    //'remove Elevator from ElevatorList'
 
                 WHEN Elevator is operational and safe
                     SET elevatorStatus TO Online
-                    'add Elevator from ElevatorList'
+                    //'add Elevator from ElevatorList'*/
 
-                WHEN ElevatorDirection is idle
-                    if ElevatorDestination is not null THEN
-                        move elevator to ElevatorDestination without stops and without updating ElevatorFloorUpRequestList and ElevatorFloorDownRequestList
-                        WHEN ElevatorFloor is equal to ElevatorDestination
-                            SET ElevatorDirection TO buttonDirection
-                            'continue using ElevatorFloorRequestList linked to buttonDirection for ElevatorDestination
-                    endif
-                    'else         
+                if (ElevatorDirection === "idle") {
+                    if (ElevatorDestination !== null) {
+                        //move elevator to ElevatorDestination without stops and without updating ElevatorFloorUpRequestList and ElevatorFloorDownRequestList
+                        if (ElevatorFloor === ElevatorDestination) {
+                            //SET ElevatorDirection TO buttonDirection
+                            ElevatorDirection = buttonDirection;
+                            //'continue using ElevatorFloorRequestList linked to buttonDirection for ElevatorDestination
+                        }
+                    }
+                    //'else         
+                }
 
-                WHEN ElevatorDirection is not idle
-                    'switch ElevatorDirection, buttonDirection and ElevatorFloorRequestList used'
-                    'update ElevatorDestination'
-                    if ElevatorDestination is null AND ElevatorFloorUpRequestList is empty AND ElevatorFloorDownRequestList is empty THEN
-                        SET ElevatorDirection TO idle
-                        SET buttonDirection TO idle
-                   else if ElevatorDestination is null AND ElevatorFloorUpRequestList is empty AND ElevatorFloorDownRequestList is not empty THEN
-                        SET ElevatorDirection TO down
-                        SET buttonDirection TO down
-                        SET ElevatorDestination TO first item of ElevatorFloorDownRequestList
-                   else if ElevatorDestination is null AND ElevatorFloorUpRequestList is not empty AND ElevatorFloorDownRequestList is empty THEN
-                        SET ElevatorDirection TO up
-                        SET buttonDirection TO up
-                        SET ElevatorDestination TO first item of ElevatorFloorUpRequestList
-                    endif
-             
-
-                FOR EACH FloorButton IN FloorButtonList
-                    WHEN user press FloorButton
+                else if (ElevatorDirection !== "idle") {
+                    //'switch ElevatorDirection, buttonDirection and ElevatorFloorRequestList used'
+                    //'update ElevatorDestination'
+                    if (ElevatorDestination === null && ElevatorFloorUpRequestList === [] && ElevatorFloorDownRequestList === []) {
+                        ElevatorDirection = "idle";
+                        buttonDirection = "idle";
+                    } 
+                    else if (ElevatorDestination === null && ElevatorFloorUpRequestList === [] && ElevatorFloorDownRequestList !== []) {
+                        ElevatorDirection = "down";
+                        buttonDirection = "down";
+                        ElevatorDestination = ElevatorFloorDownRequestList[0];
+                    }
+                    else if (ElevatorDestination === null && ElevatorFloorUpRequestList !== [] && ElevatorFloorDownRequestList === []) {
+                        ElevatorDirection = "up";
+                        buttonDirection = "up";
+                        ElevatorDestination = ElevatorFloorUpRequestList[0];
+                    }
+                }            
+                
+                var FloorButton;
+                FOR (FloorButton IN FloorButtonList) {
+                    /*WHEN user press FloorButton
                         turn FloorButtonLight on
-                        set status of FloorButton to Pressed
-                        if ElevatorFloor is lower than FloorButtonFloor THEN
-                            SET buttonDirection to up
-                        else if ElevatorFloor is higher than FloorButtonFloor THEN
-                            SET buttonDirection to down
-                        else
-                            SET buttonDirection to idle '//null
-                            open doors
+                        set status of FloorButton to Pressed */
+                        if (ElevatorFloor < FloorButtonFloor) {
+                            buttonDirection = "up";
+                        } 
+                        else if (ElevatorFloor > FloorButtonFloor) {
+                            buttonDirection = "down";
+                        }
+                        else {
+                            buttonDirection = "idle"; //null
+                            /*open doors
                             turn FloorButtonLight off
-                            close doors after a delay of 7 seconds
-                        endif
-                        SET floorRequested to FloorButtonFloor
-                        CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
-                ENDFOR
+                            close doors after a delay of 7 seconds*/
+                        }
+                        floorRequested = FloorButtonFloor;
+                        /*CALL elevatorAddFloorRequestList with ElevatorDestination, ElevatorFloor, ElevatorDirection, ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND floorRequested
+                    */ }
 
-
-                WHEN ElevatorFloor is equal to ElevatorDestination
-                    CALL elevatorRemoveFloorRequestList with ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND ElevatorDestination
-                    if ElevatorDirection is up THEN 
-                        SET ElevatorDestination TO first item of ElevatorFloorUpRequestList
-                        turn the light off of UpButton of this floor
-                        set status of UpButton of this floor to notPressed
-                    else if ElevatorDirection is down THEN 
-                        SET ElevatorDestination TO first item of ElevatorFloorDownRequestList
-                        turn the light off of DownButton of this floor
-                        set status of DownButton of this floor to notPressed
-                    endif
-                    turn the light off of FloorButton of this floor
+                if (ElevatorFloor === ElevatorDestination) {
+                    /*CALL elevatorRemoveFloorRequestList with ElevatorFloorUpRequestList, ElevatorFloorDownRequestList, buttonDirection AND ElevatorDestination
+                    */if (ElevatorDirection === "up") {
+                        ElevatorDestination = ElevatorFloorUpRequestList[0];
+                        /*turn the light off of UpButton of this floor
+                        set status of UpButton of this floor to notPressed*/
+                    } 
+                    else if (ElevatorDirection === "down") {
+                        ElevatorDestination = ElevatorFloorDownRequestList[0];
+                        /*turn the light off of DownButton of this floor
+                        set status of DownButton of this floor to notPressed*/
+                    } 
+                    /*turn the light off of FloorButton of this floor
                     set status of FloorButton of this floor to notPressed
                     stop elevator
                     open doors
                     close doors after a delay of 7 seconds
-                    allow users to use OpenDoorButton AND CloseDoorButton before or when door is closing only
-                    WHEN door is closed
+                    allow users to use OpenDoorButton AND CloseDoorButton before or when door is closing only*/
+                    /*WHEN door is closed
                         move elevator to the next floor if list is not empty (ElevatorDestination not null)
                         if ElevatorDirection is up THEN 
                             INCREMENT ElevatorFloor
                         else if ElevatorDirection is down THEN 
                             DECREMENT ElevatorFloor
-                        endif
+                        endif*/
+                }
 
-                WHEN ElevatorFloor is lower than ElevatorDestination and ElevatorDirection is up
-                    move elevator to the next floor
-                    INCREMENT ElevatorFloor
+                if (ElevatorFloor < ElevatorDestination && ElevatorDirection === "up") {
+                    //move elevator to the next floor
+                    ElevatorFloor++;
+                }
 
-                WHEN ElevatorFloor is higher than ElevatorDestination and ElevatorDirection is down
-                    move elevator to the next floor               
-                    DECREMENT ElevatorFloor
+                else if (ElevatorFloor > ElevatorDestination && ElevatorDirection === "down") {
+                    //move elevator to the next floor               
+                    ElevatorFloor--;
+                }
+            }
+        }
 
-
-
-            ENDFOR
-
-        ENDWHILE
-
-        'verify or update loop condition
-        if elevatorStatusOnlineAmount is equal to 0
-            SET columnStatus TO offline
-        endif
+        
+        //verify or update loop condition
+        if (elevatorStatusOnlineAmount === 0) {
+            //SET columnStatus TO offline
+            columnStatus = "offline";
+        }
     
-    ENDWHILE
-ENDFOR
+    }
+}
+
+
 
 
 '-------------------------------------------------------Testing Section------------------------------------------------------------'
