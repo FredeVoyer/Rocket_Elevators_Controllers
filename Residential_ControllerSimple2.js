@@ -2,63 +2,63 @@
 
 class Column {
     constructor() {
-    this.ElevatorList = [];
+    this.elevatorList = [];
     }
-    static RequestElevator(RequestedFloor, Direction) {
+    static requestElevator(requestedFloor, direction) {
         // Compute distance between elevator floor and floor requested
-        ElevatorA.Distance = Math.abs(ElevatorA.Floor-RequestedFloor);
-        ElevatorB.Distance = Math.abs(ElevatorB.Floor-RequestedFloor);
+        elevatorA.distance = Math.abs(elevatorA.floor-requestedFloor);
+        elevatorB.distance = Math.abs(elevatorB.floor-requestedFloor);
         // Determine the closest elevator for scenario 1 and move it to the requested floor
-        if (ElevatorA.Direction === 'idle' && ElevatorB.Direction === 'idle') {
-            if (ElevatorA.Distance <= ElevatorB.Distance) {
-                console.log('Elevator selected is : ElevatorA' );
+        if (elevatorA.direction === 'idle' && elevatorB.direction === 'idle') {
+            if (elevatorA.distance <= elevatorB.distance) {
+                console.log('Elevator selected is : elevatorA' );
                 // Determine the elevator direction and move it accordingly
-                if (ElevatorA.Floor < RequestedFloor) {
-                    ElevatorA.Direction = "up";
-                    console.log('ElevatorA direction is: ' + ElevatorA.Direction);
+                if (elevatorA.floor < requestedFloor) {
+                    elevatorA.direction = "up";
+                    console.log('elevatorA direction is: ' + elevatorA.direction);
                     // Move the elevator to the requested floor
-                    //ElevatorA.Destination = RequestedFloor;
-                    for (var i =ElevatorA.Floor; i <= RequestedFloor; i++) {
-                        console.log('ElevatorA floor is: ' + ElevatorA.Floor);
-                        ElevatorA.Floor=i;
+                    //elevatorA.destination = requestedFloor;
+                    for (var i =elevatorA.floor; i <= requestedFloor; i++) {
+                        console.log('elevatorA floor is: ' + elevatorA.floor);
+                        elevatorA.floor=i;
                     }
                 }
-                else if (ElevatorA.Floor > RequestedFloor) {
-                    ElevatorA.Direction = "down";
-                    console.log('ElevatorA direction is: ' + ElevatorA.Direction);
+                else if (elevatorA.floor > requestedFloor) {
+                    elevatorA.direction = "down";
+                    console.log('elevatorA direction is: ' + elevatorA.direction);
                     // Move the elevator to the requested floor
-                    //ElevatorA.Destination = RequestedFloor;
-                    for (var i =ElevatorA.Floor; i >= RequestedFloor; i--) {
-                        console.log('ElevatorA floor is: ' + ElevatorA.Floor);
-                        ElevatorA.Floor=i;
+                    //elevatorA.destination = requestedFloor;
+                    for (var i =elevatorA.floor; i >= requestedFloor; i--) {
+                        console.log('elevatorA floor is: ' + elevatorA.floor);
+                        elevatorA.floor=i;
                     }
                 }
-                return "ElevatorA";
+                return "elevatorA";//"elevatorA" "ElevatorA";
             }
             else {
-                console.log('Elevator selected is : ElevatorB');
+                console.log('Elevator selected is : elevatorB');
                 // Determine the elevator direction and move it accordingly
-                if(ElevatorB.Floor < RequestedFloor) {
-                    ElevatorB.Direction = "up";
-                    console.log('ElevatorB direction is: ' + ElevatorB.Direction);
+                if(elevatorB.floor < requestedFloor) {
+                    elevatorB.direction = "up";
+                    console.log('elevatorB direction is: ' + elevatorB.direction);
                     // Move the elevator to the requested floor
-                    //ElevatorB.Destination = RequestedFloor;
-                    for (var i =ElevatorB.Floor; i <= RequestedFloor; i++) {
-                        console.log('ElevatorB floor is: ' + ElevatorB.Floor);
-                        ElevatorB.Floor=i;
+                    //elevatorB.destination = requestedFloor;
+                    for (var i =elevatorB.floor; i <= requestedFloor; i++) {
+                        console.log('elevatorB floor is: ' + elevatorB.floor);
+                        elevatorB.floor=i;
                     }
                 }
-                else if(ElevatorB.Floor > RequestedFloor) {
-                    ElevatorB.Direction = "down";
-                    console.log('ElevatorB direction is: ' + ElevatorB.Direction);
+                else if(elevatorB.floor > requestedFloor) {
+                    elevatorB.direction = "down";
+                    console.log('elevatorB direction is: ' + elevatorB.direction);
                     // Move the elevator to the requested floor
-                    //ElevatorB.Destination = RequestedFloor;
-                    for (var i =ElevatorB.Floor; i >= RequestedFloor; i--) {
-                        console.log('ElevatorB floor is: ' + ElevatorB.Floor);
-                        ElevatorB.Floor=i;
+                    //elevatorB.destination = requestedFloor;
+                    for (var i =elevatorB.floor; i >= requestedFloor; i--) {
+                        console.log('elevatorB floor is: ' + elevatorB.floor);
+                        elevatorB.floor=i;
                     }
                 }
-                return "ElevatorB";
+                return "elevatorB";//"elevatorB" "ElevatorB";
             }
         }    
     
@@ -69,36 +69,36 @@ class Column {
 class Elevator {
     constructor(_id, _direction, _floor, _destination) {
     this.id = _id;
-    this.Direction = _direction; // null (idle not moving if destination is null else moving), up, down (moving for both)
-    this.Floor= _floor; // floor domain (1,...,10)
-    this.Destination = _destination; // floor domain (1,...,10) and null if Direction to null (idle, not moving; else moving)
-    this.FloorRequestList= [];
+    this.direction = _direction; // null (idle not moving if destination is null else moving), up, down (moving for both)
+    this.floor= _floor; // floor domain (1,...,10)
+    this.destination = _destination; // floor domain (1,...,10) and null if Direction to null (idle, not moving; else moving)
+    this.floorRequestList= [];
     }
-    static RequestFloor(Elevator, RequestedFloor) {
-        console.log('RequestFloor method, Elevator is: ' + Elevator);
-        console.log(Elevator + ' is stopped at floor: ' + this.Floor);
+    static requestFloor(elevator, requestedFloor) {
+        console.log('requestFloor method, elevator is: ' + elevator);
+        console.log(elevator + ' is stopped at floor: ' + this.floor);
         // Determine the elevator direction and move it accordingly
-        if (this.Floor < RequestedFloor) {
-            this.Direction = "up";
-            console.log(Elevator + ' direction is: ' + this.Direction);
+        if (this.floor < requestedFloor) {
+            this.direction = "up";
+            console.log(elevator + ' direction is: ' + this.direction);
             // Move the elevator to the requested floor
-            //this.Destination = RequestedFloor;
-            while (this.Floor <= RequestedFloor) {
-                console.log(Elevator + ' floor is: ' + this.Floor);
-                this.Floor++;
+            //this.destination = requestedFloor;
+            while (this.floor <= requestedFloor) {
+                console.log(elevator + ' floor is: ' + this.floor);
+                this.floor++;
             }
         }
-        else if (this.Floor > RequestedFloor) {
-            this.Direction = "down";
-            console.log(Elevator + ' direction is: ' + this.Direction);
+        else if (this.floor > requestedFloor) {
+            this.direction = "down";
+            console.log(elevator + ' direction is: ' + this.direction);
             // Move the elevator to the requested floor
-            //this.Destination = RequestedFloor;
-            while (this.Floor >= RequestedFloor) {
-                console.log(Elevator + ' floor is: ' + this.Floor);
-                this.Floor--;
+            //this.destination = requestedFloor;
+            while (this.floor >= requestedFloor) {
+                console.log(elevator + ' floor is: ' + this.floor);
+                this.floor--;
             }
         }
-        console.log(Elevator + ' final floor is: ' + this.Floor);
+        console.log(elevator + ' final floor is: ' + this.floor);
         // if final value not good ->  change condition (remove=)
     }
 }
@@ -108,10 +108,12 @@ var column_amount = 1;
 var elevator_amount = 2;
 var floor_amount = 10;
 
-var ColumnA = new Column();  
+var columnA = new Column();  
 
 /*var ElevatorA = new Elevator();     
 var ElevatorB = new Elevator();     */
+var elevatorA = new Elevator(1, "idle", 2, null);     
+var elevatorB = new Elevator(2, "idle", 6, null);
 
 /*-------------------------------------------------------Testing Section------------------------------------------------------------'
 - Scenario 1:
@@ -121,46 +123,98 @@ var ElevatorB = new Elevator();     */
     Elevator B is Idle at floor 6
         ElevatorDirection is Idle 
         ElevatorFloor is 6 */
-var ElevatorA = new Elevator(1, "idle", 2, null);     
-var ElevatorB = new Elevator(2, "idle", 6, null);
-console.log('ElevatorA.Floor is: ' + ElevatorA.Floor);
-console.log('ElevatorA.Direction is: ' + ElevatorA.Direction);
-console.log('ElevatorA.Destination is: ' + ElevatorA.Destination);
-console.log('ElevatorA.id is: ' + ElevatorA.id);
-console.log('ElevatorB.Floor is: ' + ElevatorB.Floor);
-console.log('ElevatorB.Direction is: ' + ElevatorB.Direction);
-console.log('ElevatorB.Destination is: ' + ElevatorB.Destination);
-console.log('ElevatorB.id is: ' + ElevatorB.id);
+function scenario1() {
+    // Initiate the scenario in the documentation
+    var column_amount = 1;
+    var elevator_amount = 2;
+    var floor_amount = 10;
 
-// Initiate ColumnA.ElevatorList    
-ColumnA.ElevatorList.push("ElevatorA");      
-ColumnA.ElevatorList.push("ElevatorB");   
+    var columnA = new Column();  
 
-/* Someone is on floor 3 and wants to go to the 7th floor. */
-//var Elevator = ColumnA.RequestElevator(3, "up");
-var ElevatorSelected = Column.RequestElevator(3, "up");
-Elevator.RequestFloor(ElevatorSelected, 7);  
-console.log('ColumnA.ElevatorList is: ' + ColumnA.ElevatorList);
-console.log('ElevatorA.Floor is: ' + ElevatorA.Floor);
-console.log('ElevatorA.Direction is: ' + ElevatorA.Direction);
-console.log('ElevatorA.Destination is: ' + ElevatorA.Destination);
-console.log('ElevatorA.id is: ' + ElevatorA.id);
-console.log('ElevatorB.Floor is: ' + ElevatorB.Floor);
-console.log('ElevatorB.Direction is: ' + ElevatorB.Direction);
-console.log('ElevatorB.Destination is: ' + ElevatorB.Destination);
-console.log('ElevatorB.id is: ' + ElevatorB.id);
-
-
-   /* Elevator A is expected to be sent.
-
-- Scenario 2:
+    var elevatorA = new Elevator(1, "idle", 2, null);     
+    var elevatorB = new Elevator(2, "idle", 6, null);
+    console.log('elevatorA.floor is: ' + elevatorA.floor);
+    console.log('elevatorA.direction is: ' + elevatorA.direction);
+    console.log('elevatorA.destination is: ' + elevatorA.destination);
+    console.log('elevatorA.id is: ' + elevatorA.id);
+    console.log('elevatorB.floor is: ' + elevatorB.floor);
+    console.log('elevatorB.direction is: ' + elevatorB.direction);
+    console.log('elevatorB.destination is: ' + elevatorB.destination);
+    console.log('elevatorB.id is: ' + elevatorB.id);
+    
+    // Initiate columnA.elevatorList    
+    columnA.elevatorList.push("elevatorA");      
+    columnA.elevatorList.push("elevatorB");   
+    
+    /* Someone is on floor 3 and wants to go to the 7th floor. */
+    //var elevator = columnA.requestElevator(3, "up");
+    var elevatorSelected = Column.requestElevator(3, "up");
+    Elevator.requestFloor(elevatorSelected, 7);  
+    console.log('columnA.elevatorList is: ' + columnA.elevatorList);
+    console.log('elevatorA.floor is: ' + elevatorA.floor);
+    console.log('elevatorA.direction is: ' + elevatorA.direction);
+    console.log('elevatorA.destination is: ' + elevatorA.destination);
+    console.log('elevatorA.id is: ' + elevatorA.id);
+    console.log('elevatorB.floor is: ' + elevatorB.floor);
+    console.log('elevatorB.direction is: ' + elevatorB.direction);
+    console.log('elevatorB.destination is: ' + elevatorB.destination);
+    console.log('elevatorB.id is: ' + elevatorB.id);
+    
+    
+       /* Elevator A is expected to be sent.*/
+    
+}
+scenario1()
+/*- Scenario 2:
     Elevator A is Idle at floor 10 
         ElevatorDirection is Idle 
         ElevatorFloor is 10 
     Elevator B is idle at floor 3
         ElevatorDirection is Idle 
-        ElevatorFloor is 3 
+        ElevatorFloor is 3 */
+function scenario2() {
+    // Initiate the scenario in the documentation
+    var column_amount = 1;
+    var elevator_amount = 2;
+    var floor_amount = 10;
 
+    var ColumnA = new Column();  
+
+    var ElevatorA = new Elevator(1, "idle", 2, null);     
+    var ElevatorB = new Elevator(2, "idle", 6, null);
+    console.log('ElevatorA.Floor is: ' + ElevatorA.Floor);
+    console.log('ElevatorA.Direction is: ' + ElevatorA.Direction);
+    console.log('ElevatorA.Destination is: ' + ElevatorA.Destination);
+    console.log('ElevatorA.id is: ' + ElevatorA.id);
+    console.log('ElevatorB.Floor is: ' + ElevatorB.Floor);
+    console.log('ElevatorB.Direction is: ' + ElevatorB.Direction);
+    console.log('ElevatorB.Destination is: ' + ElevatorB.Destination);
+    console.log('ElevatorB.id is: ' + ElevatorB.id);
+    
+    // Initiate ColumnA.ElevatorList    
+    ColumnA.ElevatorList.push("ElevatorA");      
+    ColumnA.ElevatorList.push("ElevatorB");   
+    
+    /* Someone is on floor 3 and wants to go to the 7th floor. */
+    //var Elevator = ColumnA.RequestElevator(3, "up");
+    var ElevatorSelected = Column.RequestElevator(3, "up");
+    Elevator.RequestFloor(ElevatorSelected, 7);  
+    console.log('ColumnA.ElevatorList is: ' + ColumnA.ElevatorList);
+    console.log('ElevatorA.Floor is: ' + ElevatorA.Floor);
+    console.log('ElevatorA.Direction is: ' + ElevatorA.Direction);
+    console.log('ElevatorA.Destination is: ' + ElevatorA.Destination);
+    console.log('ElevatorA.id is: ' + ElevatorA.id);
+    console.log('ElevatorB.Floor is: ' + ElevatorB.Floor);
+    console.log('ElevatorB.Direction is: ' + ElevatorB.Direction);
+    console.log('ElevatorB.Destination is: ' + ElevatorB.Destination);
+    console.log('ElevatorB.id is: ' + ElevatorB.id);
+    
+    
+       /* Elevator A is expected to be sent.*/
+    
+}
+//scenario2()
+/*
     Someone is on the 1st floor and requests the 6th floor.
         CALL columnAddFloorRequestList with FloorUpRequestList, FloorDownRequestList, up AND 1
 
