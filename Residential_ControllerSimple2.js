@@ -3,80 +3,81 @@ class Column {
     constructor(elevatorAmount, floorAmount) {
         let i;
         this.elevatorList = [];
+        this.elevatorAmount = elevatorAmount;
+        this.floorAmount = floorAmount;
         for (i = 1; i <= elevatorAmount; i++) {
             this.elevatorList.push(new Elevator(i, floorAmount));
         }
     }
     findElevator(requestedFloor, direction) {
-        // Compute distance between each elevator floor and floor requested
-        //elevatorA.distance = Math.abs(elevatorA.floor-requestedFloor);
-        //elevatorB.distance = Math.abs(elevatorB.floor-requestedFloor);
+        // Compute distance between each elevator floor and floor requested toto
         var elevatorDistanceList=[];
-        for (i = 0; i < elevatorAmount; i++) {
-            elevatorList[i].distance =  Math.abs(elevatorList[i].floor-requestedFloor);
-            //elevatorDistanceList.push(elevatorList[i].distance);
-            elevatorDistanceList[i]=elevatorList[i].distance;
+        for (var i = 0; i < this.elevatorAmount; i++) {
+            elevatorDistanceList.push(Math.abs(this.elevatorList[i].floor - requestedFloor));
+            this.elevatorList[i].distance = Math.abs(this.elevatorList[i].floor - requestedFloor);
         }
-        var elev;
-       /* i=0;
-        for (elev of elevatorList) {
-            elevatorList[i].distance =  Math.abs(elevatorList[i].floor-requestedFloor);
-            i++;
-        }*/
         // Identify the smallest distance
         //SORT ascending order distance
         elevatorDistanceList.sort(function(a,b){return a-b});
         var minDistance = elevatorDistanceList[0];
+
         // Identify closest elevator (only one))
         //FOR (elev of elevatorList) {
-        for (i = 0; i < elevatorAmount; i++) {
-            if (elevatorList[i].distance === minDistance) {
-                ElevatorSelected = elevatorList[i];
+        var idElevatorSelected;
+        for (i = 0; i < this.elevatorAmount; i++) {
+            if (this.elevatorList[i].distance === minDistance) {
+               // ElevatorSelected = this.elevatorList[i];
+               var idElevatorSelected = i+1;
+                return idElevatorSelected;
                 break; // select only one elevator
             }
         }
-        return ElevatorSelected;
 
-                /* Determine the closest elevator for scenario 1 and 2 and move it to the requested floor
-                if (elevatorA.direction === 'idle' && elevatorB.direction === 'idle') {
-                    if (elevatorA.distance <= elevatorB.distance) {*/
+        /* Determine the closest elevator for scenario 1 and 2 and move it to the requested floor
+        if (elevatorA.direction === 'idle' && elevatorB.direction === 'idle') {
+            if (elevatorA.distance <= elevatorB.distance) {*/
         
 
     }
-
     updateFloorDirection(elevator, floor, direction) {
         elevator.floor= floor;
         elevator.direction = direction;
     }
-
     requestElevator(requestedFloor, direction) {
-        var elevator = findElevator(requestedFloor, direction);
-        console.log('Elevator selected is: ' + elevator.id );
+        var idElevatorSelected = this.findElevator(requestedFloor, direction); // this.elevatorList[0];
+        console.log('idElevatorSelected: ' + idElevatorSelected)
+        console.log('Elevator selected is: elevator' + this.elevatorList[idElevatorSelected-1].id );
         // Determine the elevator direction and move it accordingly
-        if (elevator.floor < requestedFloor) {
-            elevator.direction = "up";
-            console.log('elevator direction is: ' + elevator.direction);
+        if (this.elevatorList[idElevatorSelected-1].floor < requestedFloor) {
+            this.elevatorList[idElevatorSelected-1].direction = "up";
+            console.log('elevator' + this.elevatorList[idElevatorSelected-1].id + ' direction is: ' + this.elevatorList[idElevatorSelected-1].direction);
             // Move the elevator to the requested floor
-            //elevatorA.destination = requestedFloor;
-            for (var i =elevator.floor; i <= requestedFloor; i++) {
-                console.log('elevatorAfloor is: ' + elevator.floor);
-                elevator.floor=i;
+            //this.elevatorList[idElevatorSelected-1].destination = requestedFloor;
+            /*for (var i =this.elevatorList[idElevatorSelected-1].floor; i <= requestedFloor; i++) {
+                console.log('elevator' + this.elevatorList[idElevatorSelected-1].id + ' floor is: ' + this.elevatorList[idElevatorSelected-1].floor);
+                this.elevatorList[idElevatorSelected-1].floor=i;
+            }*/
+            while (this.elevatorList[idElevatorSelected-1].floor <= requestedFloor) {
+                console.log('elevator' + this.elevatorList[idElevatorSelected-1].id + ' floor is: ' + this.elevatorList[idElevatorSelected-1].floor);
+                this.elevatorList[idElevatorSelected-1].floor++;
             }
+            this.elevatorList[idElevatorSelected-1].floor--;
+           
         }
-        else if (elevator.floor > requestedFloor) {
-            elevator.direction = "down";
-            console.log('elevator direction is: ' + elevator.direction);
+        else if (this.elevatorList[idElevatorSelected-1].floor > requestedFloor) {
+            this.elevatorList[idElevatorSelected-1].direction = "down";
+            console.log('elevator' + this.elevatorList[idElevatorSelected-1].id + ' direction is: ' + this.elevatorList[idElevatorSelected-1].direction);
             // Move the elevator to the requested floor
-            //elevatorA.destination = requestedFloor;
-            for (var i =elevator.floor; i >= requestedFloor; i--) {
-                console.log('elevatorAfloor is: ' + elevator.floor);
-                elevator.floor=i;
+            //this.elevatorList[idElevatorSelected-1].destination = requestedFloor;
+            //for (var i =this.elevatorList[idElevatorSelected-1].floor; i >= requestedFloor; i--) {
+            while (this.elevatorList[idElevatorSelected-1].floor >= requestedFloor) {
+                console.log('elevator' + this.elevatorList[idElevatorSelected-1].id + ' floor is: ' + this.elevatorList[idElevatorSelected-1].floor);
+                this.elevatorList[idElevatorSelected-1].floor--;
             }
+            this.elevatorList[idElevatorSelected-1].floor++;
         }
-        return elevator.id;//elevator";
+        return this.elevatorList[idElevatorSelected-1].id;//elevator";
     }
-          
-
 }
 
 // definition of the class Elevator
@@ -90,31 +91,32 @@ class Elevator {
         this.floorRequestList= [];
     }
     requestFloor(elevator, requestedFloor) {
-        console.log('requestFloor method, elevator is: ' + elevator);
-        console.log(elevator + ' is stopped at floor: ' + this.floor);
+        console.log('requestFloor method, elevator is: elevator' + elevator);
+        console.log('elevator' + elevator + ' is stopped at floor: ' + this.floor);
         // Determine the elevator direction and move it accordingly
         if (this.floor < requestedFloor) {
             this.direction = "up";
-            console.log(elevator + ' direction is: ' + this.direction);
+            console.log('elevator' + elevator + ' direction is: ' + this.direction);
             // Move the elevator to the requested floor
             //this.destination = requestedFloor;
             while (this.floor <= requestedFloor) {
-                console.log(elevator + ' floor is: ' + this.floor);
+                console.log('elevator' + elevator + ' floor is: ' + this.floor);
                 this.floor++;
             }
+            this.floor--;
         }
         else if (this.floor > requestedFloor) {
             this.direction = "down";
-            console.log(elevator + ' direction is: ' + this.direction);
+            console.log('elevator' + elevator + ' direction is: ' + this.direction);
             // Move the elevator to the requested floor
             //this.destination = requestedFloor;
             while (this.floor >= requestedFloor) {
-                console.log(elevator + ' floor is: ' + this.floor);
+                console.log('elevator' + elevator + ' floor is: ' + this.floor);
                 this.floor--;
             }
+            this.floor++;
         }
-        console.log(elevator + ' final floor is: ' + this.floor);
-        // if final value not good ->  change condition (remove=)
+        console.log('elevator' + elevator + ' is stopped at floor: ' + this.floor);
     }
     updateFloorDirection(floor, direction) {
         this.floor= floor;
@@ -141,14 +143,8 @@ var ElevatorB = new Elevator();     */
 // Scenario 1
 columnA.updateFloorDirection(columnA.elevatorList[0], 2, "idle");
 columnA.updateFloorDirection(columnA.elevatorList[1], 6, "idle");
-//var elevatorA = new Elevator(1, "idle", 2, null);     
-//var elevatorB = new Elevator(2, "idle", 6, null);
 // Scenario 2
-//var elevatorA = new Elevator(1, "idle", 10, null);     
-//var elevatorB = new Elevator(2, "idle", 3, null);
 // Scenario 3
-//var elevatorA = new Elevator(1, "idle", 10, null);     
-//var elevatorB = new Elevator(2, "idle", 3, null);
 
 /*- Scenario 1:
     Elevator A 
@@ -158,15 +154,6 @@ columnA.updateFloorDirection(columnA.elevatorList[1], 6, "idle");
         ElevatorDirection is Idle 
         ElevatorFloor is 6 */
 function scenario1() {
-    /* Initiate the scenario in the documentation
-    var column_amount = 1;
-    var elevator_amount = 2;
-    var floor_amount = 10;
-
-    var columnA = new Column();  
-
-    var elevatorA = new Elevator(1, "idle", 2, null);     
-    var elevatorB = new Elevator(2, "idle", 6, null);*/
     columnA.updateFloorDirection(columnA.elevatorList[0], 2, "idle");
     columnA.updateFloorDirection(columnA.elevatorList[1], 6, "idle");
 
@@ -178,17 +165,15 @@ function scenario1() {
     console.log('elevatorB.direction is: ' + columnA.elevatorList[1].direction);
     console.log('elevatorB.destination is: ' + columnA.elevatorList[1].destination);
     console.log('elevatorB.id is: ' + columnA.elevatorList[1].id);
-    
-    // Initiate columnA.elevatorList    
-    //columnA.elevatorList.push("elevatorA");      
-    //columnA.elevatorList.push("elevatorB");   
-    
+        
     /* Someone is on floor 3 and wants to go to the 7th floor. */
     //var elevator = columnA.requestElevator(3, "up");
-    var elevatorSelected = columnA.requestElevator(3, "up");
+    var idElevatorSelected = columnA.requestElevator(3, "up");
     //Elevator.requestFloor(elevatorSelected, 7);  
-    elevatorSelected.requestFloor(elevatorSelected, 7);  
+    columnA.elevatorList[idElevatorSelected-1].requestFloor(idElevatorSelected, 7);  
+    //elevatorSelected.requestFloor(elevatorSelected, 7);  
     console.log('columnA.elevatorList is: ' + columnA.elevatorList);
+    console.log('columnA.elevatorList is: ' + columnA.elevatorList[0] + columnA.elevatorList[0]);
     console.log('elevatorA.floor is: ' + columnA.elevatorList[0].floor);
     console.log('elevatorA.direction is: ' + columnA.elevatorList[0].direction);
     console.log('elevatorA.destination is: ' + columnA.elevatorList[0].destination);
