@@ -1,36 +1,71 @@
 //JS code for residential building elevators controller 
+
+// definition of the class Column or controller
 class Column {
     constructor(elevatorAmount, floorAmount) {
         let i;
         this.elevatorList = [];
         this.potentialElevatorsList= [];
-        this.nonPotentialElevatorsList= [];
-       
+        this.nonPotentialElevatorsList= [];       
         this.elevatorAmount = elevatorAmount;
         this.floorAmount = floorAmount;
+        this.upButtonList = [];
+        this.downButtonList = [];
+        this.doorList = [];
+
         for (i = 1; i <= elevatorAmount; i++) {
             this.elevatorList.push(new Elevator(i, floorAmount));
         }
-    }
+        for (i = 1; i <= floorAmount - 1; i++) {
+            this.upButtonList.push(new UpButton(i, i));
+        }
+        for (i = 1; i <= floorAmount - 1; i++) {
+            this.downButtonList.push(new DownButton(i, i+1));
+        }
+        for (i = 1; i <= elevatorAmount; i++) {
+            this.doorList.push(new Door());
+        }
+
+   }
     findElevator(requestedFloor, direction) {
         // Identify potential elevators depending on the request and create list
         //var potentialElevatorsList=[]; 
+
+        //var priority; (tie it to elevator this.priority aka property) no time to test it and implement
+        //var priorityList=[]; 
         for (var i = 0; i < this.elevatorAmount; i++) {
             if (this.elevatorList[i].direction==="idle") {
                 this.potentialElevatorsList.push(this.elevatorList[i]);
+                //priority=2;
+                //priorityList.push(priority);
             }
             else if (this.elevatorList[i].direction==="up" && requestedFloor >= this.elevatorList[i].floor && direction ==="up") {
                 this.potentialElevatorsList.push(this.elevatorList[i]);
-            }
+                //priority=1;
+                //priorityList.push(priority);
+                }
             else if (this.elevatorList[i].direction==="down" && requestedFloor <= this.elevatorList[i].floor && direction ==="down") {
                 this.potentialElevatorsList.push(this.elevatorList[i]);
+                //priority=1;
+                //priorityList.push(priority);
             }
             else  {
                 this.nonPotentialElevatorsList.push(this.elevatorList[i]);
                 // adjustment for scenario3 (little trick)
                 this.elevatorList[i].direction = "idle";
             }
-       }
+        }
+
+        // Determine the highest priority available (tie it to elevator this.priority aka property)
+        //SORT ascending order priorityList (copy to keep original order to remove???)
+        //priorityList.sort(function(a,b){return a-b});
+        //var highestPriority = priorityList[0];
+        // remove cases not equal to highestPriority
+        /*if (priorityList[i] !== highestPriority) {
+            //REMOVE it
+            potentialElevatorsList.shift();
+        } might not work but something like that like only pushing highest priority cases at the beginning in the potentialElevatorsList*/
+
 
         // Compute distance between each potential elevator floor and floor requested toto
         var elevatorDistanceList=[];
@@ -69,6 +104,9 @@ class Column {
         elevator.direction = direction;
     }
     requestElevator(requestedFloor, direction) {
+        //upButtonPressed() call there or in scenarios (if direction)
+        //downButtonPressed() call there or in scenarios (if direction)
+
         var idElevatorSelected = this.findElevator(requestedFloor, direction); // this.elevatorList[0];
         console.log('idElevatorSelected: ' + idElevatorSelected)
         console.log('Elevator selected is: elevator' + this.elevatorList[idElevatorSelected-1].id );
@@ -111,14 +149,25 @@ class Elevator {
         this.id = _id;
         this.floorAmount = _floorAmount;
         this.direction = "idle"; // null (idle not moving if destination is null else moving), up, down (moving for both)
-        this.floor= 1; // floor domain (1,...,10)
-        this.destination = null; // floor domain (1,...,10) and null if Direction to null (idle, not moving; else moving)
+        this.floor= 1; // floor domain (1,...,floorAmount)
+        this.destination = null; // floor domain (1,...,floorAmount) and null if Direction to null (idle, not moving; else moving)
         this.floorRequestList= [];
+        this.floorButtonList = [];
+
+        for (var i = 1; i <= _floorAmount; i++) {
+            this.floorButtonList.push(new FloorButton(i, i));
+        }
     }
     requestFloor(elevator, requestedFloor) {
         console.log('requestFloor method, elevator is: elevator' + elevator);
         console.log('elevator' + elevator + ' is stopped at floor: ' + this.floor);
+        //upButtonNotPressed() call there or in requestElevator (if direction)
+        //downButtonNotPressed() call there or in requestElevator (if direction)
+
         console.log('elevator' + elevator + ' opens doors' );
+        //openDoor() call there 
+        //floorButtonPressed() call there or in scenario 
+        //closeDoor() call there  
         console.log('elevator' + elevator + ' closes doors' );
         // Determine the elevator direction and move it accordingly
         if (this.floor < requestedFloor) {
@@ -145,6 +194,9 @@ class Elevator {
         }
         console.log('elevator' + elevator + ' is stopped at floor: ' + this.floor);
         console.log('elevator' + elevator + ' opens doors' );
+        //openDoor() call there 
+        //floorButtonNotPressed() call there  
+        //closeDoor() call there  
         console.log('elevator' + elevator + ' closes doors' );
 
     }
@@ -160,6 +212,75 @@ class Elevator {
         // destination or floorRequestList[0]
         this.destination = destination;
         // push and sort floorRequestList
+    }
+}
+
+// definition of the class UpButton
+class UpButton {
+    constructor(_id, _floor) {
+        this.id = _id;
+        this.direction = "up"; // (idle not moving if destination is null else moving), up, down (moving for both);
+        this.floor= _floor; // floor domain (1,...,floorAmount)       
+        this.status = "notPressed"; // notPressed or pressed
+        this.Light = "off"; // on or off
+    }
+    upButtonPressed() {
+        this.status = "pressed"; 
+        this.Light = "on";
+    }
+    upButtonNotPressed() {
+        this.status = "notPressed"; 
+        this.Light = "off";
+    }
+}
+
+// definition of the class DownButton
+class DownButton {
+    constructor(_id, _floor) {
+        this.id = _id;
+        this.direction = "down"; // (idle not moving if destination is null else moving), up, down (moving for both);
+        this.floor= _floor; // floor domain (1,...,floorAmount)       
+        this.status = "notPressed"; // notPressed or pressed
+        this.Light = "off"; // on or off
+    }
+    downButtonPressed() {
+        this.status = "pressed"; 
+        this.Light = "on";
+    }
+    downButtonNotPressed() {
+        this.status = "notPressed"; 
+        this.Light = "off";
+    }
+}
+
+// definition of the class Door
+class Door {
+    constructor() {
+        this.status = "closed"; // open or closed
+    }
+    openDoor() {
+        this.status = "open";
+    }
+    closeDoor() {
+        this.status = "closed";
+    }
+}
+
+// definition of the class FloorButton
+class FloorButton {
+    constructor(_id, _floor) {
+        this.id = _id;
+        this.floor= _floor; // floor domain (1,...,floorAmount)       
+        this.status = "notPressed"; // notPressed or pressed
+        this.Light = "off"; // on or off
+    }
+    floorButtonPressed() {
+        this.status = "pressed"; 
+        this.Light = "on";
+    }
+    floorButtonNotPressed() {
+        this.status = "notPressed"; 
+        this.Light = "off";
     }
 }
 
@@ -190,7 +311,9 @@ function scenario1() {
         
     /* Someone is on floor 3 and wants to go to the 7th floor. */
     var idElevatorSelected = columnA.requestElevator(3, "up");
+    //upButtonPressed() call there or in requestElevator (if direction)
     columnA.elevatorList[idElevatorSelected-1].requestFloor(idElevatorSelected, 7);  
+    //floorButtonPressed() call there or in requestFloor (if direction)
 
     console.log('columnA.elevatorList is: ' + columnA.elevatorList[0] + columnA.elevatorList[0]);
     console.log('elevator1.floor is: ' + columnA.elevatorList[0].floor);

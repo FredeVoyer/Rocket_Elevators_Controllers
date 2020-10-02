@@ -1,6 +1,6 @@
 #Python code for residential building elevators controller 
 
-# definition of the class Column
+# definition of the class Column or controller
 class Column:
     def __init__(self, elevatorAmount, floorAmount):
         self.elevatorAmount = elevatorAmount
@@ -8,8 +8,18 @@ class Column:
         self.elevatorList = []
         self.potentialElevatorsList= []
         self.nonPotentialElevatorsList= []
+        self.upButtonList = []
+        self.downButtonList = []
+        self.doorList = []
+
         for i in range(elevatorAmount):
             self.elevatorList.append(Elevator(i+1, floorAmount))
+        for i in range(floorAmount - 1):
+            self.upButtonList.append(UpButton(i+1, i+1))
+        for i in range(floorAmount - 1):
+            self.downButtonList.append(DownButton(i+1, i+2))
+        for i in range(elevatorAmount):
+            self.doorList.append(Door())
 
     def findElevator(self,requestedFloor, direction):
         # Identify potential elevators depending on the request and create list
@@ -87,17 +97,19 @@ class Column:
         
         return self.elevatorList[idElevatorSelected-1].id #elevator"
         
-
-
 # definition of the class Elevator
 class Elevator :
     def __init__(self, _id, _floorAmount):
         self.id = _id
         self.floorAmount = _floorAmount
         self.direction = "idle" # null (idle not moving if destination is null else moving), up, down (moving for both)
-        self.floor= 1 # floor domain (1,...,10)
-        self.destination = None # floor domain (1,...,10) and null if Direction to null (idle, not moving else moving)
+        self.floor= 1 # floor domain (1,...,floorAmount)
+        self.destination = None # floor domain (1,...,floorAmount) and null if Direction to null (idle, not moving else moving)
         self.floorRequestList= []
+        self.floorButtonList=[]
+
+        for i in range(_floorAmount):
+            self.floorButtonList.append(FloorButton(i+1, i+1))
 
     def requestFloor(self, elevator, requestedFloor):
         print('requestFloor method, elevator is: elevator' + str(elevator))
@@ -132,6 +144,66 @@ class Elevator :
         print('elevator' + str(elevator) + ' opens doors' )
         print('elevator' + str(elevator) + ' closes doors' )
 
+# definition of the class UpButton
+class UpButton :
+    def __init__(self, _id, _floor):
+        self.id = _id
+        self.direction = "up" # (idle not moving if destination is null else moving), up, down (moving for both)
+        self.floor= _floor # floor domain (1,...,floorAmount)
+        self.status = "notPressed" # notPressed or pressed
+        self.Light = "off" # on or off
+
+    def upButtonPressed(self):
+        self.status = "pressed"
+        self.Light = "on"
+
+    def upButtonNotPressed(self):
+        self.status = "notPressed"
+        self.Light = "off"
+
+# definition of the class DownButton
+class DownButton :
+    def __init__(self, _id, _floor):
+        self.id = _id
+        self.direction = "down" # null (idle not moving if destination is null else moving), up, down (moving for both)
+        self.floor= _floor # floor domain (1,...,floorAmount)
+        self.status = "notPressed" # notPressed or pressed
+        self.Light = "off" # on or off
+
+    def downButtonPressed(self):
+        self.status = "pressed"
+        self.Light = "on"
+
+    def downButtonNotPressed(self):
+        self.status = "notPressed"
+        self.Light = "off"
+
+# definition of the class Door
+class Door :
+    def __init__(self):
+        self.status = "closed" # closed or open
+
+    def openDoor(self):
+        self.status = "open"
+    
+    def closeDoor(self):
+        self.status = "closed"
+
+# definition of the class FloorButton
+class FloorButton :
+    def __init__(self, _id, _floor):
+        self.id = _id
+        self.floor= _floor # floor domain (1,...,floorAmount)
+        self.status = "notPressed" # notPressed or pressed
+        self.Light = "off" # on or off
+
+    def floorButtonPressed(self):
+        self.status = "pressed"
+        self.Light = "on"
+
+    def floorButtonNotPressed(self):
+        self.status = "notPressed"
+        self.Light = "off"
 
 
 #-------------------------------------------------------Testing Section------------------------------------------------------------*/
@@ -154,7 +226,9 @@ def scenario1():
         
     # Someone is on floor 3 and wants to go to the 7th floor. 
     idElevatorSelected = columnA.requestElevator(3, "up")
+    #upButtonPressed() call there or in requestElevator (if direction)
     columnA.elevatorList[idElevatorSelected-1].requestFloor(idElevatorSelected, 7)
+    #floorButtonPressed() call there or in requestFloor (if direction)
 
     print('columnA.potentialElevatorList is: ' + str(columnA.potentialElevatorsList[0]) + str(columnA.potentialElevatorsList[1]))
     #print('columnA.nonPotentialElevatorList is: ' + str(columnA.nonPotentialElevatorList[0]) + str(columnA.nonPotentialElevatorList[1]))
