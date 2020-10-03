@@ -3,7 +3,8 @@
 // definition of the class Column or controller
 class Column {
     constructor(elevatorAmount, floorAmount) {
-        let i;
+        let i;      
+        this.status = "online"; // online or offline
         this.elevatorList = [];
         this.potentialElevatorsList= [];
         this.nonPotentialElevatorsList= [];       
@@ -141,15 +142,25 @@ class Column {
         }
         return this.elevatorList[idElevatorSelected-1].id;//elevator";
     }
+    colOnline() {
+        this.status = "online"; 
+    }
+    colOffline() {
+        this.status = "offline"; 
+    }
+
 }
 
 // definition of the class Elevator
 class Elevator {
     constructor(_id, _floorAmount) {
         this.id = _id;
+        this.status = "online"; // online or offline
         this.floorAmount = _floorAmount;
         this.direction = "idle"; // null (idle not moving if destination is null else moving), up, down (moving for both)
         this.floor= 1; // floor domain (1,...,floorAmount)
+        this.origin= 1; // floor domain (1,...,floorAmount)
+        this.maxWeight= 2500; // pounds
         this.destination = null; // floor domain (1,...,floorAmount) and null if Direction to null (idle, not moving; else moving)
         this.floorRequestList= [];
         this.floorButtonList = [];
@@ -212,6 +223,12 @@ class Elevator {
         // destination or floorRequestList[0]
         this.destination = destination;
         // push and sort floorRequestList
+    }
+    elevOnline() {
+        this.status = "online"; 
+    }
+    elevOffline() {
+        this.status = "offline"; 
     }
 }
 
@@ -328,7 +345,7 @@ function scenario1() {
        /* Elevator A is expected to be sent.*/
     
 }
-//scenario1()
+scenario1()
 
 function scenario2() {
     /*- Scenario 2:
@@ -398,7 +415,7 @@ function scenario2() {
 
    // Elevator A should be sent.
 }
-scenario2()
+//scenario2()
 
 function scenario3() { 
     /*
@@ -459,5 +476,5 @@ function scenario3() {
 
 }       
 //scenario3()
-// done sequentiel (as seen in the channel) instead of real time no requestFloorList for the elevators
+// done sequentiel (as seen in the channel) instead of real time (algo) no requestFloorList for the elevators
 //'-------------------------------------------------------Testing Section------------------------------------------------------------*/

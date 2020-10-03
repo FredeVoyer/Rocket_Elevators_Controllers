@@ -3,6 +3,7 @@
 # definition of the class Column or controller
 class Column:
     def __init__(self, elevatorAmount, floorAmount):
+        self.status = "online" # online or offline
         self.elevatorAmount = elevatorAmount
         self.floorAmount = floorAmount
         self.elevatorList = []
@@ -96,14 +97,23 @@ class Column:
             self.elevatorList[idElevatorSelected-1].floor +=1
         
         return self.elevatorList[idElevatorSelected-1].id #elevator"
-        
+
+    def colOnline(self):
+        self.status = "online" 
+    
+    def colOffline(self):
+        self.status = "offline"
+
 # definition of the class Elevator
 class Elevator :
     def __init__(self, _id, _floorAmount):
         self.id = _id
+        self.status = "online" # online or offline
         self.floorAmount = _floorAmount
         self.direction = "idle" # null (idle not moving if destination is null else moving), up, down (moving for both)
         self.floor= 1 # floor domain (1,...,floorAmount)
+        self.origin= 1 # floor domain (1,...,floorAmount)
+        self.maxWeight= 2500 # pounds
         self.destination = None # floor domain (1,...,floorAmount) and null if Direction to null (idle, not moving else moving)
         self.floorRequestList= []
         self.floorButtonList=[]
@@ -144,6 +154,12 @@ class Elevator :
         print('elevator' + str(elevator) + ' opens doors' )
         print('elevator' + str(elevator) + ' closes doors' )
 
+    def elevOnline(self):
+        self.status = "online" 
+    
+    def elevOffline(self):
+        self.status = "offline"
+    
 # definition of the class UpButton
 class UpButton :
     def __init__(self, _id, _floor):
@@ -243,7 +259,7 @@ def scenario1():
     
     # Elevator A is expected to be sent.
     
-#scenario1()
+scenario1()
 
 def scenario2(): 
 
@@ -360,8 +376,8 @@ def scenario3():
     print('elevator2.destination is: ' + str(columnA.elevatorList[1].destination))
     print('elevator2.id is: ' + str(columnA.elevatorList[1].id))
  
-scenario3()
+#scenario3()
 
 #print ("self.elevatorList" )
-# done sequentiel (as seen in the channel) instead of real time no requestFloorList for the elevators
+# done sequentiel (as seen in the channel) instead of real time (algo) no requestFloorList for the elevators
 #-------------------------------------------------------Testing Section------------------------------------------------------------*/
