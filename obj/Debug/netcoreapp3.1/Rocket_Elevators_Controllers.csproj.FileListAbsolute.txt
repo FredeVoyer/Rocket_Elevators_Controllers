@@ -1,0 +1,13 @@
+C:\Users\f_voy\Rocket_Elevators_Controllers\bin\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.exe
+C:\Users\f_voy\Rocket_Elevators_Controllers\bin\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.deps.json
+C:\Users\f_voy\Rocket_Elevators_Controllers\bin\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.runtimeconfig.json
+C:\Users\f_voy\Rocket_Elevators_Controllers\bin\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.runtimeconfig.dev.json
+C:\Users\f_voy\Rocket_Elevators_Controllers\bin\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.dll
+C:\Users\f_voy\Rocket_Elevators_Controllers\bin\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.pdb
+C:\Users\f_voy\Rocket_Elevators_Controllers\obj\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.csprojAssemblyReference.cache
+C:\Users\f_voy\Rocket_Elevators_Controllers\obj\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.AssemblyInfoInputs.cache
+C:\Users\f_voy\Rocket_Elevators_Controllers\obj\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.AssemblyInfo.cs
+C:\Users\f_voy\Rocket_Elevators_Controllers\obj\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.csproj.CoreCompileInputs.cache
+C:\Users\f_voy\Rocket_Elevators_Controllers\obj\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.dll
+C:\Users\f_voy\Rocket_Elevators_Controllers\obj\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.pdb
+C:\Users\f_voy\Rocket_Elevators_Controllers\obj\Debug\netcoreapp3.1\Rocket_Elevators_Controllers.genruntimeconfig.cache
