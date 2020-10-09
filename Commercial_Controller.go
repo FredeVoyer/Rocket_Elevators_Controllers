@@ -15,6 +15,7 @@ type Elevator struct {
 	direction   string
 	floor       int
 	destination int
+	destinationList []int
 	distance    int
 	moving      string
 	priority    int
@@ -43,96 +44,71 @@ type Battery struct {
 	columnList           []Column
 }
 
-//func (b *Battery) createObjects(columnAmount, elevatorPerColAmount int, minFloorColumnList, maxFloorColumnList []int, potentialElevatorsList []Elevator) {
+// Creating instances of battery, columns and elevators depending on the inputs given by the scenarios (4)
 func (b *Battery) createObjects(columnAmount int, elevatorPerColAmount int, minFloorColumnList []int, maxFloorColumnList []int) {
 	// Create battery and initiate properties
 	b.columnAmount = columnAmount
 	b.elevatorPerColAmount = elevatorPerColAmount
 	for i := 0; i < columnAmount; i++ {
 		// Create columns and column list and initiate properties
-		//b.columnList = append(b.columnList, Column{id:i+1, minFloor:minFloorColumnList[i], maxFloor:maxFloorColumnList[i], elevatorPerColAmount:elevatorPerColAmount, potentialElevatorsList:potentialElevatorsList []Elevator})
 		b.columnList = append(b.columnList, Column{id: i + 1, minFloor: minFloorColumnList[i], maxFloor: maxFloorColumnList[i], elevatorPerColAmount: elevatorPerColAmount})
 		b.minFloorColumnList = append(b.minFloorColumnList, minFloorColumnList[i])
 		b.maxFloorColumnList = append(b.maxFloorColumnList, maxFloorColumnList[i])
-
-		//b.columnList[i].potentialElevatorsList = []Elevator{}
-		/*b.columnList[i].minFloor = minFloorColumnList[i]
-		b.columnList[i].maxFloor = maxFloorColumnList[i]
-		id int
-		elevatorPerColAmount int
-		elevatorList []Elevator
-		priorityList []int*/
 
 		for j := 0; j < elevatorPerColAmount; j++ {
 			// Create elevators and elevator list and initiate properties
 			b.columnList[i].elevatorList = append(b.columnList[i].elevatorList, Elevator{id: j + 1, priority: 99})
 		}
-
 	}
 }
 
-// add argument Elevator elevator for c.potentialElevatorsList nevermind it works now
+// Choose an elevator depending on its movement (destination), direction and distance to the floor requested (and the direction requested)
 func (c *Column) findElevator(requestedFloor int, direction string) int {
-	// Set the priority for each elevator depending on the request floor and create list
-	for i := 0; i < c.elevatorPerColAmount; i++ {
+	// Identify real min and max floor by including the main floor (1) of the elevator (and column)
+	var realMaxFloor = c.maxFloor
+	var realMinFloor = 1
+	if c.id == 1 {
+		realMaxFloor = 1
+	}
+	if c.id == 1 {
+		realMinFloor = c.minFloor
+	} 
+	// Set the priority for each elevator depending on the request floor and put it in a list
+	for i := 0; i < c.elevatorPerColAmount; i++ {	
+		// Set priority 2 to elevator not moving and without destination (idle)
 		if c.elevatorList[i].direction =="idle" {
 			c.elevatorList[i].priority = 2
 			c.priorityList = append(c.priorityList, c.elevatorList[i].priority)
+		// Set priority 1 to elevator moving in the same direction as requested and floor reuqested is in the way of his run
 		} else if c.elevatorList[i].direction =="up" && requestedFloor >= c.elevatorList[i].floor && direction =="up" {
 			c.elevatorList[i].priority = 1
 			c.priorityList = append(c.priorityList, c.elevatorList[i].priority)
 		} else if c.elevatorList[i].direction =="down" && requestedFloor <= c.elevatorList[i].floor && direction =="down" {
 			c.elevatorList[i].priority = 1
 			c.priorityList = append(c.priorityList, c.elevatorList[i].priority)
-		} else if c.elevatorList[i].direction =="up" && requestedFloor >= c.elevatorList[i].floor && direction =="down" && c.elevatorList[i].destination == c.elevatorList[i].maxFloor {
+		// Set priority 3 to elevator moving to the min or max floor so it can change direction then
+		} else if c.elevatorList[i].direction =="up" && requestedFloor >= c.elevatorList[i].floor && direction =="down" && c.elevatorList[i].destination == realMaxFloor {
 			c.elevatorList[i].priority = 3
 			c.priorityList = append(c.priorityList, c.elevatorList[i].priority)
-		} else if c.elevatorList[i].direction =="down" && requestedFloor <= c.elevatorList[i].floor && direction =="up" && c.elevatorList[i].destination == 1 {
+		} else if c.elevatorList[i].direction =="down" && requestedFloor <= c.elevatorList[i].floor && direction =="up" && c.elevatorList[i].destination == realMinFloor {
 			c.elevatorList[i].priority = 3
 			c.priorityList = append(c.priorityList, c.elevatorList[i].priority)
+		// Default priority 99, remaining cases elevator going in different direction than requested
 		} else {
 			c.priorityList = append(c.priorityList, c.elevatorList[i].priority)
 		}
 	}
-
-	fmt.Println("c.priorityList0 is:", c.priorityList[0])
-	fmt.Println("c.priorityList1 is:", c.priorityList[1])
-	fmt.Println("c.priorityList2 is:", c.priorityList[2])
-	fmt.Println("c.priorityList3 is:", c.priorityList[3])
-	fmt.Println("c.priorityList4 is:", c.priorityList[4])
 
 	// Identify the highest priority to identify the potential elevators
-	//sort.Ints(ints)
 	sort.Ints(c.priorityList)
-	//c.priorityList.Sort()
-	//int minPriority = math.Min(c.priorityList)
 	minPriority := c.priorityList[0]
-	fmt.Println("minPriority is:", minPriority)
 
-	// Identify potential elevators depending on their priority request and create list
-	//var c.potentialElevatorsList []Elevator
-	//var potentialElevatorsList []Elevator
-	for i := 0; i < c.elevatorPerColAmount; i++ {
-		if c.elevatorList[i].priority == minPriority {
-			c.potentialElevatorsList = append(c.potentialElevatorsList, c.elevatorList[i])
-		} else {
-			c.nonPotentialElevatorsList = append(c.nonPotentialElevatorsList, c.elevatorList[i])
-		}
-	}
-
-	// Compute distance between each potential elevator floor and floor requested toto
-	//elevatorDistanceList := make(int[],0)
+	// Compute distance between each potential (highest priority) elevator floor and floor requested 
 	var elevatorDistanceList []int
 
-	// int[] elevatorDistanceList
-	/*for i := 0; i < c.potentialElevatorsList.length; i++ {
-		elevatorDistanceList = append(elevatorDistanceList, math.Abs(c.potentialElevatorsList[i].floor - requestedFloor))
-		//elevatorDistanceList.Add(math.Abs(c.potentialElevatorsList[i].floor - requestedFloor))
-		c.potentialElevatorsList[i].distance = math.Abs(c.potentialElevatorsList[i].floor - requestedFloor)
-	}*/
 	for i := 0; i < c.elevatorPerColAmount; i++ {
 		if c.elevatorList[i].priority == minPriority {
-			//c.elevatorList[i].distance = math.Abs(c.elevatorList[i].floor - requestedFloor)
+			//c.elevatorList[i].distance = math.Abs(c.elevatorList[i].floor - requestedFloor) //change type int to float to make it work
 			c.elevatorList[i].distance = c.elevatorList[i].floor - requestedFloor
 			if c.elevatorList[i].distance < 0 {
 				c.elevatorList[i].distance = c.elevatorList[i].distance * -1
@@ -142,55 +118,33 @@ func (c *Column) findElevator(requestedFloor int, direction string) int {
 	}
 
 	// Identify the smallest distance
-	//SORT ascending order distance
 	sort.Ints(elevatorDistanceList)
-	//elevatorDistanceList.Sort()
 	minDistance := elevatorDistanceList[0]
-	fmt.Println("minDistance is:", minDistance)
-
-	// Identify closest elevator (only one))
+	// Identify closest elevator with its id (only one if some have the same minimum distance)
 	idElevatorSelected := 0
-	//for i := 0; i < c.potentialElevatorsList.length; i++ {
 	for i := 0; i < c.elevatorPerColAmount; i++ {
-		//if (c.potentialElevatorsList[i].distance == minDistance) {
 		if c.elevatorList[i].distance == minDistance {
 			// ElevatorSelected = c.elevatorList[i]
-			//idElevatorSelected = c.potentialElevatorsList[i].id
 			idElevatorSelected = c.elevatorList[i].id
-			return idElevatorSelected // c.potentialElevatorsList[i].id
+			return idElevatorSelected 
 			//break // select only one elevator
 		}
 	}
 	return idElevatorSelected
 }
 
-//func (c *Column) updateFloorDirectionDestinationMoving(elevator Elevator, floor int, direction string, destination int, moving string) {
-func (b *Battery) updateFloorDirectionDestinationMoving(elevator Elevator, floor int, direction string, destination int, moving string) {
-	elevator.floor = floor
-	elevator.direction = direction
-	elevator.destination = destination
-	elevator.moving = moving
-	fmt.Println(elevator.floor)
-	fmt.Println("fase")
-}
-
 func (c *Column) requestElevator(requestedFloor int, direction string) int {
 	//upButtonPressed() call there or in scenarios (if direction)
 	//downButtonPressed() call there or in scenarios (if direction)
 
-	idElevatorSelected := c.findElevator(requestedFloor, direction) // c.elevatorList[0];
-	//fmt.Println("idElevatorSelected:", idElevatorSelected)
+	idElevatorSelected := c.findElevator(requestedFloor, direction) 
 	fmt.Println("Elevator selected is: elevator", c.elevatorList[idElevatorSelected-1].id)
 	// Determine the elevator direction and move it accordingly
-	if c.elevatorList[idElevatorSelected-1].floor < requestedFloor {
+	if c.elevatorList[idElevatorSelected-1].floor < requestedFloor {// elevator is lower than floor requested
 		c.elevatorList[idElevatorSelected-1].direction ="up"
 		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"direction is:", c.elevatorList[idElevatorSelected-1].direction)
-		// Move the elevator to the requested floor
-		//c.elevatorList[idElevatorSelected-1].destination = requestedFloor
-		/*for (var i =c.elevatorList[idElevatorSelected-1].floor; i <= requestedFloor; i++) {
-			fmt.Println("elevator",c.elevatorList[idElevatorSelected-1].id,"floor is:",c.elevatorList[idElevatorSelected-1].floor)
-			c.elevatorList[idElevatorSelected-1].floor=i
-		}*/
+		// Move the elevator to the requested floor (up)
+		//c.elevatorList[idElevatorSelected-1].destination = requestedFloor (list sort depending on direction)
 		for c.elevatorList[idElevatorSelected-1].floor <= requestedFloor {
 			fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"floor is:", c.elevatorList[idElevatorSelected-1].floor)
 			c.elevatorList[idElevatorSelected-1].moving ="yes"
@@ -202,13 +156,21 @@ func (c *Column) requestElevator(requestedFloor int, direction string) int {
 		}
 		c.elevatorList[idElevatorSelected-1].floor--
 		c.elevatorList[idElevatorSelected-1].moving ="no"
-
-	} else if c.elevatorList[idElevatorSelected-1].floor > requestedFloor {
+		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"is stopped at floor:", c.elevatorList[idElevatorSelected-1].floor)
+		//upButtonNotPressed() call there or in requestElevator (if direction)
+		//downButtonNotPressed() call there or in requestElevator (if direction)
+		fmt.Println("Call button light turns off")
+	
+		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"opens doors")
+		//openDoor() call there
+		//floorButtonPressed() call there or in scenario
+		//closeDoor() call there
+		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"closes doors")
+	} else if c.elevatorList[idElevatorSelected-1].floor > requestedFloor { // elevator is higher than floor requested
 		c.elevatorList[idElevatorSelected-1].direction ="down"
 		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"direction is:", c.elevatorList[idElevatorSelected-1].direction)
-		// Move the elevator to the requested floor
+		// Move the elevator to the requested floor (down)
 		//c.elevatorList[idElevatorSelected-1].destination = requestedFloor;
-		//for (var i =c.elevatorList[idElevatorSelected-1].floor; i >= requestedFloor; i--) {
 		for c.elevatorList[idElevatorSelected-1].floor >= requestedFloor {
 			fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"floor is:", c.elevatorList[idElevatorSelected-1].floor)
 			c.elevatorList[idElevatorSelected-1].moving ="yes"
@@ -224,27 +186,34 @@ func (c *Column) requestElevator(requestedFloor int, direction string) int {
 			c.elevatorList[idElevatorSelected-1].floor = 1
 		}
 		c.elevatorList[idElevatorSelected-1].moving ="no"
+		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"is stopped at floor:", c.elevatorList[idElevatorSelected-1].floor)
+		//upButtonNotPressed() call there or in requestElevator (if direction)
+		//downButtonNotPressed() call there or in requestElevator (if direction)
+		fmt.Println("Call button light turns off")
+	
+		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"opens doors")
+		//openDoor() call there
+		//floorButtonPressed() call there or in scenario
+		//closeDoor() call there
+		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"closes doors")
+	
+	} else {// elevator is on floor requested
+		fmt.Println("Call button light turns off")
+	
+		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"opens doors")
+		fmt.Println("elevator", c.elevatorList[idElevatorSelected-1].id,"closes doors")
 	}
-	return c.elevatorList[idElevatorSelected-1].id //elevator";
+	return c.elevatorList[idElevatorSelected-1].id //elevator
 }
 
 func (e *Elevator) requestFloor(elevator int, requestedFloor int) {
-	//fmt.Println("requestFloor method, elevator is: elevator", elevator)
+	//destinationList append remove (if time to do it)
 	e.moving ="no"
-	fmt.Println("elevator", elevator,"is stopped at floor:", e.floor)
-	//upButtonNotPressed() call there or in requestElevator (if direction)
-	//downButtonNotPressed() call there or in requestElevator (if direction)
-
-	fmt.Println("elevator", elevator,"opens doors")
-	//openDoor() call there
-	//floorButtonPressed() call there or in scenario
-	//closeDoor() call there
-	fmt.Println("elevator", elevator,"closes doors")
 	// Determine the elevator direction and move it accordingly
 	if e.floor < requestedFloor {
 		e.direction ="up"
 		fmt.Println("elevator", elevator,"direction is:", e.direction)
-		// Move the elevator to the requested floor
+		// Move the elevator to the requested floor (up)
 		e.destination = requestedFloor
 		e.moving ="yes"
 		for e.floor <= requestedFloor {
@@ -260,7 +229,7 @@ func (e *Elevator) requestFloor(elevator int, requestedFloor int) {
 	} else if e.floor > requestedFloor {
 		e.direction ="down"
 		fmt.Println("elevator", elevator,"direction is:", e.direction)
-		// Move the elevator to the requested floor
+		// Move the elevator to the requested floor (down)
 		e.moving ="yes"
 		e.destination = requestedFloor
 		for e.floor >= requestedFloor {
@@ -279,12 +248,13 @@ func (e *Elevator) requestFloor(elevator int, requestedFloor int) {
 		e.moving ="no"
 	}
 	fmt.Println("elevator", elevator,"is stopped at floor:", e.floor)
+	fmt.Println("Floor button light turns off")
+
 	fmt.Println("elevator", elevator,"opens doors")
 	//openDoor() call there
 	//floorButtonNotPressed() call there
 	//closeDoor() call there
 	fmt.Println("elevator", elevator,"closes doors")
-
 }
 
 func (b *Battery) Scenario1() {
@@ -299,9 +269,9 @@ func (b *Battery) Scenario1() {
 	// Create instance of battery
 	//battery1 := new(Battery)
 	// Create objects
+		// Set the parameters: number of columns, number of elevators per columns, min and max loor of each column (excluding L)
 	b.createObjects(4, 5, []int{-6, 2, 21, 41}, []int{-1, 20, 40, 60}) //, []Elevator{})
-	//Battery battery1 = new Battery(4, 5, new int[] {-6, 2, 21, 41}, new int[] {-1, 20, 40, 60});
-
+		// Set the elevator parameters: floor, direction, destination and moving)
 	b.columnList[1].elevatorList[0].floor =20
 	b.columnList[1].elevatorList[0].direction ="down"
 	b.columnList[1].elevatorList[0].destination = 5
@@ -327,47 +297,23 @@ func (b *Battery) Scenario1() {
 	b.columnList[1].elevatorList[4].destination = 1
 	b.columnList[1].elevatorList[4].moving ="yes" 
 
-	/*fmt.Println("b.columnList[0].elevatorList[0].id",b.columnList[0].elevatorList[0].id)
-	fmt.Println("b.columnList[0].elevatorList[0].minFloor",b.columnList[0].elevatorList[0].minFloor)
-	fmt.Println("b.columnList[0].elevatorList[0].maxFloor",b.columnList[0].elevatorList[0].maxFloor)
-	*/
+	// Display the beginning of the sceanrio
+	fmt.Println("column id is:", b.columnList[1].id)
 
-	fmt.Println("elevator1.floor is:", b.columnList[1].elevatorList[0].floor)
-	fmt.Println("elevator1.direction is:", b.columnList[1].elevatorList[0].direction)
-	fmt.Println("elevator1.destination is:", b.columnList[1].elevatorList[0].destination)
-	fmt.Println("elevator1.id is:", b.columnList[1].elevatorList[0].id)
-	fmt.Println("elevator2.floor is:", b.columnList[1].elevatorList[1].floor)
-	fmt.Println("elevator2.direction is:", b.columnList[1].elevatorList[1].direction)
-	fmt.Println("elevator2.destination is:", b.columnList[1].elevatorList[1].destination)
-	fmt.Println("elevator2.id is:", b.columnList[1].elevatorList[1].id)
-	fmt.Println("elevator3.floor is:", b.columnList[1].elevatorList[2].floor)
-	fmt.Println("elevator3.direction is:", b.columnList[1].elevatorList[2].direction)
-	fmt.Println("elevator3.destination is:", b.columnList[1].elevatorList[2].destination)
-	fmt.Println("elevator3.id is:", b.columnList[1].elevatorList[2].id)
-	fmt.Println("elevator4.floor is:", b.columnList[1].elevatorList[3].floor)
-	fmt.Println("elevator4.direction is:", b.columnList[1].elevatorList[3].direction)
-	fmt.Println("elevator4.destination is:", b.columnList[1].elevatorList[3].destination)
-	fmt.Println("elevator4.id is:", b.columnList[1].elevatorList[3].id)
-	fmt.Println("elevator5.floor is:", b.columnList[1].elevatorList[4].floor)
-	fmt.Println("elevator5.direction is:", b.columnList[1].elevatorList[4].direction)
-	fmt.Println("elevator5.destination is:", b.columnList[1].elevatorList[4].destination)
-	fmt.Println("elevator5.id is:", b.columnList[1].elevatorList[4].id) 
-
-	//fmt.Println("columnList[1].id is:", b.columnList[1].id)
+	fmt.Println("elevator1 floor is", b.columnList[1].elevatorList[0].floor, ", direction is", b.columnList[1].elevatorList[0].direction, "and destination is", b.columnList[1].elevatorList[0].destination)
+	fmt.Println("elevator2 floor is", b.columnList[1].elevatorList[1].floor, ", direction is", b.columnList[1].elevatorList[1].direction, "and destination is", b.columnList[1].elevatorList[1].destination)
+	fmt.Println("elevator3 floor is", b.columnList[1].elevatorList[2].floor, ", direction is", b.columnList[1].elevatorList[2].direction, "and destination is", b.columnList[1].elevatorList[2].destination)
+	fmt.Println("elevator4 floor is", b.columnList[1].elevatorList[3].floor, ", direction is", b.columnList[1].elevatorList[3].direction, "and destination is", b.columnList[1].elevatorList[3].destination)
+	fmt.Println("elevator5 floor is", b.columnList[1].elevatorList[4].floor, ", direction is", b.columnList[1].elevatorList[4].direction, "and destination is", b.columnList[1].elevatorList[4].destination)
 
 	/* Someone at RC wants to go to the 20th floor. */
+	fmt.Println("Up button on floor 1 of column 2 is pressed and button light turns on")
 	idElevatorSelected := b.columnList[1].requestElevator(1,"up")
-
-	fmt.Println("ElevatorSelected is:", idElevatorSelected)
-
 	//upButtonPressed() call there or in requestElevator (if direction)
+
+	fmt.Println("Floor 20 button light turns on")
 	b.columnList[1].elevatorList[idElevatorSelected-1].requestFloor(idElevatorSelected, 20)
 	//floorButtonPressed() call there or in requestFloor (if direction)
-
-	/* fmt.Println("elevator5.floor is:", b.columnList[1].elevatorList[4].floor)
-	fmt.Println("elevator5.direction is:", b.columnList[1].elevatorList[4].direction)
-	fmt.Println("elevator5.destination is:", b.columnList[1].elevatorList[4].destination)
-	fmt.Println("elevator5.id is:", b.columnList[1].elevatorList[4].id) */
 
 	/* Elevator B5 is expected to be sent.*/
 }
@@ -384,8 +330,9 @@ func (b *Battery) Scenario2() {
 	// Create instance of battery
 	//battery1 := new(Battery)
 	// Create objects
+		// Set the parameters: number of columns, number of elevators per columns, min and max loor of each column (excluding L)
 	b.createObjects(4, 5, []int{-6, 2, 21, 41}, []int{-1, 20, 40, 60}) //, []Elevator{})
-
+		// Set the elevator parameters: floor, direction, destination and moving)
 	b.columnList[2].elevatorList[0].floor = 1
 	b.columnList[2].elevatorList[0].direction ="up"
 	b.columnList[2].elevatorList[0].destination = 21
@@ -411,42 +358,24 @@ func (b *Battery) Scenario2() {
 	b.columnList[2].elevatorList[4].destination = 1
 	b.columnList[2].elevatorList[4].moving ="yes"
 
-	fmt.Println("elevator1.floor is:", b.columnList[2].elevatorList[0].floor)
-	fmt.Println("elevator1.direction is:", b.columnList[2].elevatorList[0].direction)
-	fmt.Println("elevator1.destination is:", b.columnList[2].elevatorList[0].destination)
-	fmt.Println("elevator1.id is:", b.columnList[2].elevatorList[0].id)
-	fmt.Println("elevator2.floor is:", b.columnList[2].elevatorList[1].floor)
-	fmt.Println("elevator2.direction is:", b.columnList[2].elevatorList[1].direction)
-	fmt.Println("elevator2.destination is:", b.columnList[2].elevatorList[1].destination)
-	fmt.Println("elevator2.id is:", b.columnList[2].elevatorList[1].id)
-	fmt.Println("elevator3.floor is:", b.columnList[2].elevatorList[2].floor)
-	fmt.Println("elevator3.direction is:", b.columnList[2].elevatorList[2].direction)
-	fmt.Println("elevator3.destination is:", b.columnList[2].elevatorList[2].destination)
-	fmt.Println("elevator3.id is:", b.columnList[2].elevatorList[2].id)
-	fmt.Println("elevator4.floor is:", b.columnList[2].elevatorList[3].floor)
-	fmt.Println("elevator4.direction is:", b.columnList[2].elevatorList[3].direction)
-	fmt.Println("elevator4.destination is:", b.columnList[2].elevatorList[3].destination)
-	fmt.Println("elevator4.id is:", b.columnList[2].elevatorList[3].id)
-	fmt.Println("elevator5.floor is:", b.columnList[2].elevatorList[4].floor)
-	fmt.Println("elevator5.direction is:", b.columnList[2].elevatorList[4].direction)
-	fmt.Println("elevator5.destination is:", b.columnList[2].elevatorList[4].destination)
-	fmt.Println("elevator5.id is:", b.columnList[2].elevatorList[4].id)
+	// Display the beginning of the sceanrio
+	fmt.Println("column id is:", b.columnList[2].id)
 
-	fmt.Println("columnList[2].id is:", b.columnList[2].id)
+	fmt.Println("elevator1 floor is", b.columnList[2].elevatorList[0].floor, ", direction is", b.columnList[2].elevatorList[0].direction, "and destination is", b.columnList[2].elevatorList[0].destination)
+	fmt.Println("elevator2 floor is", b.columnList[2].elevatorList[1].floor, ", direction is", b.columnList[2].elevatorList[1].direction, "and destination is", b.columnList[2].elevatorList[1].destination)
+	fmt.Println("elevator3 floor is", b.columnList[2].elevatorList[2].floor, ", direction is", b.columnList[2].elevatorList[2].direction, "and destination is", b.columnList[2].elevatorList[2].destination)
+	fmt.Println("elevator4 floor is", b.columnList[2].elevatorList[3].floor, ", direction is", b.columnList[2].elevatorList[3].direction, "and destination is", b.columnList[2].elevatorList[3].destination)
+	fmt.Println("elevator5 floor is", b.columnList[2].elevatorList[4].floor, ", direction is", b.columnList[2].elevatorList[4].direction, "and destination is", b.columnList[2].elevatorList[4].destination)
 
 	/* Someone at RC wants to go to the 36th floor. */
+	fmt.Println("Up button on floor 1 of column 3 is pressed and button light turns on")
 	idElevatorSelected := b.columnList[2].requestElevator(1,"up")
-
-	fmt.Println("ElevatorSelected is:", idElevatorSelected)
-
 	//upButtonPressed() call there or in requestElevator (if direction)
+
+	fmt.Println("Floor 36 button light turns on")
+	b.columnList[2].elevatorList[idElevatorSelected-1].requestFloor(idElevatorSelected, 21)
 	b.columnList[2].elevatorList[idElevatorSelected-1].requestFloor(idElevatorSelected, 36)
 	//floorButtonPressed() call there or in requestFloor (if direction)
-
-	/*fmt.Println("elevator1.floor is:", b.columnList[2].elevatorList[0].floor)
-	fmt.Println("elevator1.direction is:", b.columnList[2].elevatorList[0].direction)
-	fmt.Println("elevator1.destination is:", b.columnList[2].elevatorList[0].destination)
-	fmt.Println("elevator1.id is:", b.columnList[2].elevatorList[0].id)*/
 
 	/* Elevator C1 is expected to be sent*/
 }
@@ -463,8 +392,9 @@ func (b *Battery) Scenario3() {
 	// Create instance of battery
 	//battery1 := new(Battery)
 	// Create objects
+		// Set the parameters: number of columns, number of elevators per columns, min and max loor of each column (excluding L)
 	b.createObjects(4, 5, []int{-6, 2, 21, 41}, []int{-1, 20, 40, 60}) //, []Elevator{})
-
+		// Set the elevator parameters: floor, direction, destination and moving)
 	b.columnList[3].elevatorList[0].floor = 58
 	b.columnList[3].elevatorList[0].direction ="down"
 	b.columnList[3].elevatorList[0].destination = 1
@@ -489,43 +419,24 @@ func (b *Battery) Scenario3() {
 	b.columnList[3].elevatorList[4].direction ="down"
 	b.columnList[3].elevatorList[4].destination = 1
 	b.columnList[3].elevatorList[4].moving ="yes"
+	
+	// Display the beginning of the sceanrio
+	fmt.Println("column id is:", b.columnList[3].id)
 
-	fmt.Println("elevator1.floor is:",b.columnList[3].elevatorList[0].floor)
-	fmt.Println("elevator1.direction is:",b.columnList[3].elevatorList[0].direction)
-	fmt.Println("elevator1.destination is:",b.columnList[3].elevatorList[0].destination)
-	fmt.Println("elevator1.id is:",b.columnList[3].elevatorList[0].id)
-	fmt.Println("elevator2.floor is:",b.columnList[3].elevatorList[1].floor)
-	fmt.Println("elevator2.direction is:",b.columnList[3].elevatorList[1].direction)
-	fmt.Println("elevator2.destination is:",b.columnList[3].elevatorList[1].destination)
-	fmt.Println("elevator2.id is:",b.columnList[3].elevatorList[1].id)
-	fmt.Println("elevator3.floor is:",b.columnList[3].elevatorList[2].floor)
-	fmt.Println("elevator3.direction is:",b.columnList[3].elevatorList[2].direction)
-	fmt.Println("elevator3.destination is:",b.columnList[3].elevatorList[2].destination)
-	fmt.Println("elevator3.id is:",b.columnList[3].elevatorList[2].id)
-	fmt.Println("elevator4.floor is:",b.columnList[3].elevatorList[3].floor)
-	fmt.Println("elevator4.direction is:",b.columnList[3].elevatorList[3].direction)
-	fmt.Println("elevator4.destination is:",b.columnList[3].elevatorList[3].destination)
-	fmt.Println("elevator4.id is:",b.columnList[3].elevatorList[3].id)
-	fmt.Println("elevator5.floor is:",b.columnList[3].elevatorList[4].floor)
-	fmt.Println("elevator5.direction is:",b.columnList[3].elevatorList[4].direction)
-	fmt.Println("elevator5.destination is:",b.columnList[3].elevatorList[4].destination)
-	fmt.Println("elevator5.id is:",b.columnList[3].elevatorList[4].id)
-
-	fmt.Println("columnList[3].id is:",b.columnList[3].id)
+	fmt.Println("elevator1 floor is", b.columnList[3].elevatorList[0].floor, ", direction is", b.columnList[3].elevatorList[0].direction, "and destination is", b.columnList[3].elevatorList[0].destination)
+	fmt.Println("elevator2 floor is", b.columnList[3].elevatorList[1].floor, ", direction is", b.columnList[3].elevatorList[1].direction, "and destination is", b.columnList[3].elevatorList[1].destination)
+	fmt.Println("elevator3 floor is", b.columnList[3].elevatorList[2].floor, ", direction is", b.columnList[3].elevatorList[2].direction, "and destination is", b.columnList[3].elevatorList[2].destination)
+	fmt.Println("elevator4 floor is", b.columnList[3].elevatorList[3].floor, ", direction is", b.columnList[3].elevatorList[3].direction, "and destination is", b.columnList[3].elevatorList[3].destination)
+	fmt.Println("elevator5 floor is", b.columnList[3].elevatorList[4].floor, ", direction is", b.columnList[3].elevatorList[4].direction, "and destination is", b.columnList[3].elevatorList[4].destination)
 
 	/* Someone at 54th floor wants to go to RC. */
+	fmt.Println("Down button on floor 54 of column 4 is pressed and button light turns on")
 	idElevatorSelected := b.columnList[3].requestElevator(54,"down")
+	//downButtonPressed() call there or in requestElevator (if direction)
 
-	//fmt.Println("ElevatorSelected is:", idElevatorSelected)
-
-	//upButtonPressed() call there or in requestElevator (if direction)
+	fmt.Println("Floor 1 (L) button light turns on")
 	b.columnList[3].elevatorList[idElevatorSelected-1].requestFloor(idElevatorSelected, 1)
 	//floorButtonPressed() call there or in requestFloor (if direction)
-
-	/*fmt.Println("elevator1.floor is:", b.columnList[3].elevatorList[0].floor)
-	fmt.Println("elevator1.direction is:", b.columnList[3].elevatorList[0].direction)
-	fmt.Println("elevator1.destination is:", b.columnList[3].elevatorList[0].destination)
-	fmt.Println("elevator1.id is:", b.columnList[3].elevatorList[0].id)*/
 
 	/* Elevator D1 is expected to be sent*/
 }
@@ -542,8 +453,9 @@ func (b *Battery) Scenario4() {
 	// Create instance of battery
 	//battery1 := new(Battery)
 	// Create objects
+		// Set the parameters: number of columns, number of elevators per columns, min and max loor of each column (excluding L)
 	b.createObjects(4, 5, []int{-6, 2, 21, 41}, []int{-1, 20, 40, 60}) //, []Elevator{})
-
+		// Set the elevator parameters: floor, direction, destination and moving)
 	b.columnList[0].elevatorList[0].floor = -4
 	b.columnList[0].elevatorList[0].direction ="idle"
 	b.columnList[0].elevatorList[0].destination = -4
@@ -569,59 +481,33 @@ func (b *Battery) Scenario4() {
 	b.columnList[0].elevatorList[4].destination = -6
 	b.columnList[0].elevatorList[4].moving ="yes"
 
-	fmt.Println("elevator1.floor is:",b.columnList[0].elevatorList[0].floor)
-	fmt.Println("elevator1.direction is:",b.columnList[0].elevatorList[0].direction)
-	fmt.Println("elevator1.destination is:",b.columnList[0].elevatorList[0].destination)
-	fmt.Println("elevator1.id is:",b.columnList[0].elevatorList[0].id)
-	fmt.Println("elevator2.floor is:",b.columnList[0].elevatorList[1].floor)
-	fmt.Println("elevator2.direction is:",b.columnList[0].elevatorList[1].direction)
-	fmt.Println("elevator2.destination is:",b.columnList[0].elevatorList[1].destination)
-	fmt.Println("elevator2.id is:",b.columnList[0].elevatorList[1].id)
-	fmt.Println("elevator3.floor is:",b.columnList[0].elevatorList[2].floor)
-	fmt.Println("elevator3.direction is:",b.columnList[0].elevatorList[2].direction)
-	fmt.Println("elevator3.destination is:",b.columnList[0].elevatorList[2].destination)
-	fmt.Println("elevator3.id is:",b.columnList[0].elevatorList[2].id)
-	fmt.Println("elevator4.floor is:",b.columnList[0].elevatorList[3].floor)
-	fmt.Println("elevator4.direction is:",b.columnList[0].elevatorList[3].direction)
-	fmt.Println("elevator4.destination is:",b.columnList[0].elevatorList[3].destination)
-	fmt.Println("elevator4.id is:",b.columnList[0].elevatorList[3].id)
-	fmt.Println("elevator5.floor is:",b.columnList[0].elevatorList[4].floor)
-	fmt.Println("elevator5.direction is:",b.columnList[0].elevatorList[4].direction)
-	fmt.Println("elevator5.destination is:",b.columnList[0].elevatorList[4].destination)
-	fmt.Println("elevator5.id is:",b.columnList[0].elevatorList[4].id)
+	// Display the beginning of the sceanrio
+	fmt.Println("column id is:", b.columnList[0].id)
 
-	fmt.Println("columnList[0].id is:",b.columnList[0].id)
+	fmt.Println("elevator1 floor is", b.columnList[0].elevatorList[0].floor, ", direction is", b.columnList[0].elevatorList[0].direction, "and destination is", b.columnList[0].elevatorList[0].destination)
+	fmt.Println("elevator2 floor is", b.columnList[0].elevatorList[1].floor, ", direction is", b.columnList[0].elevatorList[1].direction, "and destination is", b.columnList[0].elevatorList[1].destination)
+	fmt.Println("elevator3 floor is", b.columnList[0].elevatorList[2].floor, ", direction is", b.columnList[0].elevatorList[2].direction, "and destination is", b.columnList[0].elevatorList[2].destination)
+	fmt.Println("elevator4 floor is", b.columnList[0].elevatorList[3].floor, ", direction is", b.columnList[0].elevatorList[3].direction, "and destination is", b.columnList[0].elevatorList[3].destination)
+	fmt.Println("elevator5 floor is", b.columnList[0].elevatorList[4].floor, ", direction is", b.columnList[0].elevatorList[4].direction, "and destination is", b.columnList[0].elevatorList[4].destination)
 
 	/* Someone at SS3 wants to go to RC. */
+	fmt.Println("Up button on floor SS3 (-3) of column 1 is pressed and button light turns on")
 	idElevatorSelected := b.columnList[0].requestElevator(-3,"up")
-
-	//fmt.Println("ElevatorSelected is:", idElevatorSelected)
-
 	//upButtonPressed() call there or in requestElevator (if direction)
+
+	fmt.Println("Floor 1 (L) button light turns on")
 	b.columnList[0].elevatorList[idElevatorSelected-1].requestFloor(idElevatorSelected, 1)
 	//floorButtonPressed() call there or in requestFloor (if direction)
-
-	/*fmt.Println("elevator4.floor is:", b.columnList[0].elevatorList[3].floor)
-	fmt.Println("elevator4.direction is:", b.columnList[0].elevatorList[3].direction)
-	fmt.Println("elevator4.destination is:", b.columnList[0].elevatorList[3].destination)
-	fmt.Println("elevator4.id is:", b.columnList[0].elevatorList[3].id)/**/
 
 	/* Elevator A4 is expected to be sent*/
 }
 
 func main() {
-	//fmt.Println("Commercial Controller")
 	// Create instance of battery
 	battery1 := &Battery{}
 
-	//battery1.Scenario1()
+	battery1.Scenario1()
 	//battery1.Scenario2()
 	//battery1.Scenario3()
-	battery1.Scenario4()
-
-	// Create objects
-	//battery1.createObjects(4, 5, []int{-6,2,21,41}, []int{-1,20,40,60}) //, []Elevator{})
-
-	//fmt.Println("battery1.columnList[0].id",battery1.columnList[0].id)
-
+	//battery1.Scenario4()
 }
