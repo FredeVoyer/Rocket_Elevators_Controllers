@@ -1,4 +1,29 @@
-package main
+// 
+  // Commercial_Controller.go (commercial building elevator controller; classic approach)
+  // 
+  // Author: Frederic Voyer  
+  // Date:    October 9th, 2020 
+  // Course:  Codeboxx 
+  // 
+  // Functions   : findElevator, requestElevator, requestFloor, createObjects
+  //               scenario1, scenario2, scenario3, scenario4 and main
+  // 
+  // Description: The program works for a sequential way (realize one request after another). The elevator selected to move the user is determined
+  //              for maximum efficiency (user waiting time is minimal)  
+  // 
+  // Parameters : number of columns, number of elevators per columns, min and max loor of each column (excluding L)
+  //              elvevator floor, elevator direction, elevator destination and elevator moving 
+  //              floor requested by the user, the direction user wants to move, user destination
+  // 
+  // Return     : output printed for each scenario (4)
+  // 
+  // Examples of Usage: 
+  // 
+  //    see the 4 scenario functions at the end before the main function 
+  // 
+  // 
+
+  package main
 
 import (
 	"fmt"

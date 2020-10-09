@@ -1,4 +1,29 @@
-﻿using System;
+﻿// 
+  // Program.cs (commercial building elevator controller; classic approach)
+  // 
+  // Author: Frederic Voyer  
+  // Date:    October 9th, 2020 
+  // Course:  Codeboxx 
+  // 
+  // Functions   : findElevator, requestElevator, updateFloorDirectionDestinationMoving, requestFloor
+  //               scenario1, scenario2, scenario3, scenario4 and main
+  // 
+  // Description: The program works for a sequential way (realize one request after another). The elevator selected to move the user is determined
+  //              for maximum efficiency (user waiting time is minimal)  
+  // 
+  // Parameters : number of columns, number of elevators per columns, min and max loor of each column (excluding L)
+  //              elvevator floor, elevator direction, elevator destination and elevator moving 
+  //              floor requested by the user, the direction user wants to move, user destination
+  // 
+  // Return     : output printed for each scenario (4)
+  // 
+  // Examples of Usage: 
+  // 
+  //    see the 4 scenario functions at the end before the main function 
+  // 
+  // 
+
+using System;
 using System.Linq; // for array min, max, sum...
 using System.Collections;
 using System.Collections.Generic; 
@@ -22,7 +47,7 @@ namespace Rocket_Elevators_Controllers
             public int? distance;
             public string moving;
             public int priority;
-          //object[] floorButtonList; 
+            //object[] floorButtonList; 
 
             // Create a class constructor with multiple parameters 
             public Elevator(int _id, int _minFloor, int _maxFloor)
@@ -52,10 +77,11 @@ namespace Rocket_Elevators_Controllers
             public void requestFloor(int elevator, int requestedFloor) {
                 this.moving = "no";
                 // Determine the elevator direction and move it accordingly
+                    // move up
                 if (this.floor < requestedFloor) {
                     this.direction = "up";
                     Console.WriteLine("elevator" + elevator + " direction is: " + this.direction);
-                    // Move the elevator to the requested floor
+                    // Move the elevator to the requested floor (up)
                     this.destination = requestedFloor;
                     this.moving = "yes";
                     while (this.floor <= requestedFloor) {
@@ -69,10 +95,11 @@ namespace Rocket_Elevators_Controllers
                     this.floor--;
                     this.moving = "no";
                 }
+                    // move down
                 else if (this.floor > requestedFloor) {
                     this.direction = "down";
                     Console.WriteLine("elevator" + elevator + " direction is: " + this.direction);
-                    // Move the elevator to the requested floor
+                    // Move the elevator to the requested floor (down)
                     this.moving = "yes";
                     this.destination = requestedFloor;
                     while (this.floor >= requestedFloor) {
